@@ -1,0 +1,8 @@
+pyvisa
+pyvisa-py
+msgpack
+pyzmq
+jsonschema
+importlib_metadata
+tblib
+.

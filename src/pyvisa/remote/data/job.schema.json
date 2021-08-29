@@ -1,0 +1,146 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "resource": {
+            "type": "string"
+        },
+        "name": {
+            "type": "string"
+        },
+        "action": {
+            "type": "string",
+            "enum": [
+                "__getattr__",
+                "__setattr__"
+            ]
+        },
+        "value": {
+            "anyOf": [
+                {
+                    "type": "integer"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "object"
+                },
+                {
+                    "type": "array"
+                },
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "args": {
+            "$ref": "#/definitions/Args"
+        },
+        "kwargs": {
+            "$ref": "#/definitions/Kwargs"
+        }
+    },
+    "anyOf": [
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "__setattr__"
+                }
+            },
+            "required": [
+                "value"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "__getattr__"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        }
+    ],
+    "required": [
+        "action",
+        "name",
+        "resource"
+    ],
+    "title": "Visa job",
+    "definitions": {
+        "Kwargs": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "object"
+                        },
+                        {
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "title": "Kwargs"
+        },
+        "Args": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "title": "Args"
+        }
+    }
+}
