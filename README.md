@@ -1,4 +1,4 @@
-# pyvisa-remote
+# PyVISA-remote
 
 This plugin should extend pyvisa's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB.
 
