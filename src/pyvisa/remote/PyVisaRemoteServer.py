@@ -75,11 +75,15 @@ class PyVisaRemoteServer(object):
     async def _execute_job(self, job_data: dict) -> \
             typing.Optional[typing.Any]:
         visa = await self._get_visa_handle(job_data['resource'])
-        attribute = self._get_attr(
-            visa, job_data['name'], )
         if job_data['action'] == '__getattr__':
+            attribute = getattr(visa,
+                                visa, job_data['name'])
             if callable(attribute):
-                res = attribute(*job_data['args'], **job_data['kwargs'])
+                res = attribute(
+                    *(job_data['args'] if job_data['args']
+                      is not None else ()),
+                    **(job_data['kwargs'] if job_data['kwargs']
+                       is not None else {}))
             else:
                 res = attribute
         else:
@@ -93,9 +97,3 @@ class PyVisaRemoteServer(object):
         async with self._lock:
             self._visa_handle[resource] = self._rm.open_resource(resource)
         return self._visa_handle[resource]
-
-    def _get_attr(visa: pyvisa.Resource, name: str):
-        attr = getattr(visa, name)
-        if not attr:
-            raise AttributeError(f"module '{visa}' has no attribute '{name}'")
-        return attr
