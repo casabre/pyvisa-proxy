@@ -9,6 +9,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 class PyVisaRemoteClient(object):
+    """
+    pyvisa remote client which makes outgoing VISA calls
+
+    :param object: object base class
+    :type object: object
+    """
+
     def __init__(self, resource: str, host: str, port: int):
         super(PyVisaRemoteClient, self).__init__()
         self._ctx = zmq.Context()
@@ -32,6 +39,14 @@ class PyVisaRemoteClient(object):
         self._ctx.term()
 
     def __getattr__(self, name):
+        """
+        Overwritten base function in order to query calls via reflection
+
+        :param name: attribute name
+        :type name: str
+        :return: Any value
+        :rtype: Any
+        """
         attr = getattr(self, name)
         if callable(attr):
             def wrapper(*args, **kwargs):
@@ -42,6 +57,17 @@ class PyVisaRemoteClient(object):
             return self._request(name, '__getattr__', None, None, None)
 
     def __setattr__(self, name, value):
+        """
+        Set a value at the remote VISA VisaRemoteClient
+
+        :param name: attribute __name__
+        :type name: str
+        :param value: value to set
+        :type value: Any
+        :raises AttributeError: if a callable was provided
+        :return: Usually None
+        :rtype: Any
+        """
         attr = getattr(self, name)
         if callable(attr):
             raise AttributeError("Set should not be a callable")
@@ -49,6 +75,19 @@ class PyVisaRemoteClient(object):
             return self._request(name, '__setattr__', value, None, None)
 
     def _request(self, name: str, action: str, value=None, *args, **kwargs):
+        """
+        Send request via zmq to server
+
+        :param name: attribute name
+        :type name: str
+        :param action: __getattr__ or __setattr__
+        :type action: str
+        :param value: Value for __setattr__, defaults to None
+        :type value: Any, optional
+        :raises Exception: reraise Exception from server at client side
+        :return: Any provided value
+        :rtype: Any
+        """
         message = {
             'resources': self._resource_str,
             'name': name,

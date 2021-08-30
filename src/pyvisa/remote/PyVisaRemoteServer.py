@@ -21,6 +21,13 @@ with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
 
 
 class PyVisaRemoteServer(object):
+    """
+    pyvisa remote server which handles incoming VISA calls
+
+    :param object: object base class
+    :type object: object
+    """
+
     def __init__(self, port):
         super(PyVisaRemoteServer, self).__init__()
         self._ctx = zmq.asyncio.Context()
@@ -52,12 +59,23 @@ class PyVisaRemoteServer(object):
         asyncio.run(self._run())
 
     async def _run(self):
+        """
+        Async runner
+        """
         while True:
             msg = await self._socket.recv_multipart()
             reply = await self._call_pyvisa(msg)
             await self._socket.send_multipart(reply)
 
     async def _call_pyvisa(self, msg) -> zmq.Frame:
+        """
+        Call pyvisa with job information from client
+
+        :param msg: job description message
+        :type msg: zmq.Frage
+        :return: Result data
+        :rtype: zmq.Frame
+        """
         address, empty, request = msg
         job_data = msgpack.loads(request)
         result = dict()
@@ -74,6 +92,12 @@ class PyVisaRemoteServer(object):
 
     async def _execute_job(self, job_data: dict) -> \
             typing.Optional[typing.Any]:
+        """
+        Execute pyvisa job data
+
+        :return: Result data dictionary
+        :rtype: dict or any base type
+        """
         visa = await self._get_visa_handle(job_data['resource'])
         if job_data['action'] == '__getattr__':
             attribute = getattr(visa,
@@ -92,6 +116,14 @@ class PyVisaRemoteServer(object):
         return res
 
     async def _get_visa_handle(self, resource: str) -> pyvisa.Resource:
+        """
+        Get VISA handle in an asyncio manner. Returns
+
+        :param resource: VISA information resource string
+        :type resource: str
+        :return: pyvisa resource handle
+        :rtype: pyvisa.Resource
+        """
         if resource in self._visa_handle:
             return self._visa_handle[resource]
         async with self._lock:
