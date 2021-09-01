@@ -1,8 +1,4 @@
-
-try:
-    from importlib.metadata import version, PackageNotFoundError
-except ImportError or ModuleNotFoundError:
-    from importlib_metadata import version, PackageNotFoundError
+from importlib.metadata import version, PackageNotFoundError
 from .PyVisaRemoteClient import PyVisaRemoteClient
 from .PyVisaRemoteServer import PyVisaRemoteServer
 
