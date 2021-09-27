@@ -17,7 +17,7 @@ pip install pyvisa-remote
 In order to make devices remotely available, just run the PyVISA-remote server on your node. The server will open new VISA resources per request. Just run
 
 ```shell
-python -m pyvisa.remote --port 5000
+python -m pyivsa_remote --port 5000
 ```
 
 in order to host your "local" connections. Use any available port for network sharing.
@@ -27,11 +27,20 @@ in order to host your "local" connections. Use any available port for network sh
 Use a client like a normal PyVISA class. The calls will be forwarded by reflection to the server. In order to get started, use the following snippet in your code.
 
 ```python
-from pyvisa.remote import PyVisaRemoteClient
+from pyvisa_remote import RemoteClient
 
-instr = PyVisaRemoteClient(resource='GPIB0::1::INSTR', host='my-gpib-host.net', port=5000)
+instr = RemoteClient(resource='GPIB0::1::INSTR', host='my-gpib-host.net', port=5000)
 print(instr.query('*IDN?'))
 ```
+
+## Roadmap
+
+This should shortline outline the project goals within a version time line.
+
+| Version | Description                                                                                                                |
+| ------- | -------------------------------------------------------------------------------------------------------------------------- |
+| 0.1.0   | Running standalone in RemoteServer and RemoteClient configuration                                                          |
+| 0.2.0   | Integrate into pyvisa a compatible plugin in order to extend ResourceManager. Should reflect typing better on client side. |
 
 ## Contributing
 
