@@ -20,7 +20,7 @@ with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
     schema = json.load(fp)
 
 
-class PyVisaRemoteServer(object):
+class RemoteServer(object):
     """
     pyvisa remote server which handles incoming VISA calls
 
@@ -29,7 +29,7 @@ class PyVisaRemoteServer(object):
     """
 
     def __init__(self, port):
-        super(PyVisaRemoteServer, self).__init__()
+        super(RemoteServer, self).__init__()
         self._ctx = zmq.asyncio.Context()
         self._socket = zmq.Socket(zmq.REP)
         self._socket.bind(f'tcp://*:{port}')

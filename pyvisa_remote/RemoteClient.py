@@ -8,7 +8,7 @@ import logging
 LOGGER = logging.getLogger(__name__)
 
 
-class PyVisaRemoteClient(object):
+class RemoteClient(object):
     """
     pyvisa remote client which makes outgoing VISA calls
 
@@ -17,10 +17,10 @@ class PyVisaRemoteClient(object):
     """
 
     def __init__(self, resource: str, host: str, port: int):
-        super(PyVisaRemoteClient, self).__init__()
+        super(RemoteClient, self).__init__()
         self._ctx = zmq.Context()
         self._socket = zmq.Socket(zmq.REQ)
-        self._socket.identity = f'{platform.node()}-VisaRemoteClient'
+        self._socket.identity = f'{platform.node()}-PyVisaRemoteClient'
         self._socket.connect(f'tcpip://{host}:{port}')
         self._resource_str = resource
 
