@@ -1,26 +1,30 @@
+"""
+PyVISA-remote server which provides access to VISA handles
+"""
 import sys
 import pickle
 import asyncio
-import zmq
-import zmq.asyncio
 import logging
-import msgpack
-import pyvisa
 import typing
 import os
 import json
+import pyvisa
+import msgpack
+import zmq
+import zmq.asyncio
 from jsonschema import validate
 from tblib import pickling_support
 pickling_support.install()
 
 LOGGER = logging.getLogger(__name__)
 
-with open(os.path.abspath(os.path.join(os.path.dirname(__file__), '..',
-                                       'data', 'jobs.schema.json'))) as fp:
+with open(os.path.abspath(os.path.join(os.path.dirname(__file__),
+                                       'data', 'job.schema.json')), 'r',
+          encoding='utf-8') as fp:
     schema = json.load(fp)
 
 
-class RemoteServer(object):
+class RemoteServer:
     """
     pyvisa remote server which handles incoming VISA calls
 
@@ -28,12 +32,11 @@ class RemoteServer(object):
     :type object: object
     """
 
-    def __init__(self, port):
-        super(RemoteServer, self).__init__()
-        self._ctx = zmq.asyncio.Context()
-        self._socket = zmq.Socket(zmq.REP)
+    def __init__(self, port, ctx: typing.Optional[zmq.asyncio.Context] = None):
+        self.ctx = ctx or zmq.asyncio.Context.instance()
+        self._socket = self.ctx.socket(zmq.REP)
         self._socket.bind(f'tcp://*:{port}')
-        self._visa_handle = dict()
+        self._visa_handle: dict = {}
         self._lock = asyncio.Lock()
         try:
             self._rm = pyvisa.ResourceManager()
@@ -50,12 +53,15 @@ class RemoteServer(object):
         self.close()
 
     def close(self):
+        """Close zmq connection and VISA handles"""
         if self._socket.is_open():
             self._socket.close()
-        self._ctx.term()
-        [x.close() for x in self._visa_handle.values()]
+        self.ctx.term()
+        for handle in self._visa_handle.values():
+            handle.close()
 
     def run(self):
+        """Run server with asyncio runner"""
         asyncio.run(self._run())
 
     async def _run(self):
@@ -67,7 +73,7 @@ class RemoteServer(object):
             reply = await self._call_pyvisa(msg)
             await self._socket.send_multipart(reply)
 
-    async def _call_pyvisa(self, msg) -> zmq.Frame:
+    async def _call_pyvisa(self, msg):
         """
         Call pyvisa with job information from client
 
@@ -76,9 +82,9 @@ class RemoteServer(object):
         :return: Result data
         :rtype: zmq.Frame
         """
-        address, empty, request = msg
+        address, _, request = msg
         job_data = msgpack.loads(request)
-        result = dict()
+        result = {}
         try:
             validate(job_data, schema)
             res = await self._execute_job(job_data)
@@ -100,14 +106,12 @@ class RemoteServer(object):
         """
         visa = await self._get_visa_handle(job_data['resource'])
         if job_data['action'] == '__getattr__':
-            attribute = getattr(visa,
-                                visa, job_data['name'])
+            attribute = getattr(visa, job_data['name'])
             if callable(attribute):
-                res = attribute(
-                    *(job_data['args'] if job_data['args']
-                      is not None else ()),
-                    **(job_data['kwargs'] if job_data['kwargs']
-                       is not None else {}))
+                args = tuple([x for x in job_data['args']
+                             if x is not None]) if job_data['args'] else ()
+                kwargs = job_data['kwargs'] if job_data['kwargs'] else {}
+                res = attribute(*args, **kwargs)
             else:
                 res = attribute
         else:
