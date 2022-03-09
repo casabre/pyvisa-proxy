@@ -1,5 +1,5 @@
 """
-PyVISA-remote client which accesses VISA handles at server side
+PyVISA-proxy client which accesses VISA handles at server side
 """
 import platform
 import pickle
@@ -24,7 +24,7 @@ class CallableValue(object):
 
 class RemoteClient:
     """
-    PyVISA remote client which makes outgoing VISA calls
+    PyVISA remote proxy client which makes outgoing VISA calls
 
     :param object: object base class
     :type object: object

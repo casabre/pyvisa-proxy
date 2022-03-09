@@ -1,5 +1,5 @@
 """
-PyVISA-remote server which provides access to VISA handles
+PyVISA-proxy server which provides access to VISA handles
 """
 import sys
 import pickle
@@ -26,7 +26,7 @@ with open(os.path.abspath(os.path.join(os.path.dirname(__file__),
 
 class RemoteServer:
     """
-    pyvisa remote server which handles incoming VISA calls
+    pyvisa remote proxy server which handles incoming VISA calls
 
     :param object: object base class
     :type object: object

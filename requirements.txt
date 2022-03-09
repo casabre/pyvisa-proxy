@@ -1,7 +1,0 @@
-pyvisa
-pyvisa-py
-msgpack
-pyzmq
-jsonschema
-tblib
-.

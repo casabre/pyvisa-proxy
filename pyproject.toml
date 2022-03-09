@@ -1,5 +1,19 @@
 [build-system]
-requires = ["setuptools>=42", "wheel", "setuptools_scm[toml]>=3.4"]
+requires = ["setuptools>=45.2", "wheel", "setuptools_scm>=6.2"]
+build-backend = "setuptools.build_meta"
+
+[tool.black]
+line-length = 79
+
+[tool.isort]
+profile = "black"
+src_paths = ["src", "tests"]
+
+[tool.coverage.run]
+source = ["pysomq"]
+
+[tool.coverage.paths]
+source = ["src", ".tox/*/site-packages"]
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"

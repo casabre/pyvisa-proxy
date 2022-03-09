@@ -1,5 +1,5 @@
 """
-Run PyVISA-remote server as service
+Run PyVISA-proxy server as service
 """
 import argparse
 import sys
