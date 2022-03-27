@@ -27,20 +27,12 @@ in order to host your "local" connections. Use any available port for network sh
 Use a client like a normal PyVISA class. The calls will be forwarded by reflection to the server. In order to get started, use the following snippet in your code.
 
 ```python
-from pyvisa_proxy import RemoteClient
+import pyvisa
 
-instr = RemoteClient(resource='GPIB0::1::INSTR', host='my-gpib-host.net', port=5000)
+rm = pyvisa.ResourceManager()
+instr = rm.open_resource(resource='proxy://host:port/GPIB0::1::INSTR')
 print(instr.query('*IDN?'))
 ```
-
-## Roadmap
-
-This should shortly outline the project goals within a version time line.
-
-| Version | Description                                                                                                                |
-| ------- | -------------------------------------------------------------------------------------------------------------------------- |
-| 0.1.0   | Running standalone in RemoteServer and RemoteClient configuration                                                          |
-| 0.2.0   | Integrate into pyvisa a compatible plugin in order to extend ResourceManager. Should reflect typing better on client side. |
 
 ## Contributing
 

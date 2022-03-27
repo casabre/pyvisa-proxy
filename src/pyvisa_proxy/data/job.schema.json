@@ -12,8 +12,8 @@
         "action": {
             "type": "string",
             "enum": [
-                "__getattr__",
-                "__setattr__"
+                "getattr",
+                "setattr"
             ]
         },
         "value": {

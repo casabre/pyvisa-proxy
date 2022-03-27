@@ -1,11 +1,13 @@
+import cbor2 as cbor
 import zmq
-import msgpack
 
 
-def recv_compare_and_reply(server: zmq.Socket,
-                           expected_msg: dict,
-                           reply_msg: dict) -> bool:
-    msg = server.recv_serialized(msgpack.loads)
+def recv_compare_and_reply(
+    server: zmq.Socket, expected_msg: dict, reply_msg: dict
+) -> bool:
+    msg = cbor.loads(server.recv())
+    if "args" in msg:
+        msg["args"] = tuple(msg["args"])
     identical = msg == expected_msg
-    server.send_serialized(reply_msg, msgpack.dumps)
+    server.send(cbor.dumps(reply_msg))
     return identical
