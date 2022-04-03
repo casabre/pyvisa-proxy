@@ -1,0 +1,7 @@
+devices:
+  Dummy:
+    properties:
+      id:
+        getter:
+          q: "*IDN?"
+          r: "Dummy,123456"

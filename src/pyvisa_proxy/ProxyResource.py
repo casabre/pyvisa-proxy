@@ -1,53 +1,12 @@
 """
-PyVISA-proxy client which accesses VISA handles at server side
+PyVISA-proxy resource which accesses VISA handles at server side
 """
-import logging
-import pickle
-import platform
-from packaging.version import parse
+from pyvisa import Resource
 
-import cbor2 as cbor
-import zmq
-from six import reraise
-
-from .version import get_version
-
-VERSION = get_version()
-LOGGER = logging.getLogger(__name__)
+from .RpcClient import RpcClient
 
 
-class CompatibilityError(Exception):
-    pass
-
-
-def sync_up(host: str, sync_port: int, timeout: int):
-    ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REQ)
-    socket.identity = f"{platform.node()}-PyVisaProxyClient".encode()
-    socket.connect(f"tcp://{host}:{sync_port}")
-    try:
-        socket.send(b"")
-        polled = socket.poll(timeout=timeout * 1000)
-        if polled == 0:
-            raise TimeoutError(
-                "Establishing a connection to PyVISA proxy timed out."
-            )
-        reply = cbor.loads(socket.recv())
-        return reply.get("rpc_port"), reply.get("version")
-    finally:
-        socket.close()
-
-
-def check_for_version_compatibility(version):
-    resource_version = parse(VERSION)
-    server_version = parse(version)
-    if resource_version.release < server_version.release:
-        raise CompatibilityError(
-            f"Proxy server version {version} is to great."
-        )
-
-
-class ProxyResource:
+class ProxyResource(Resource):
     """PyVISA remote proxy resource which takes care of outgoing VISA calls."""
 
     def __init__(
@@ -55,39 +14,35 @@ class ProxyResource:
         resource_cls,
         resource_name: str,
         host: str,
-        port: int,
-        timeout: int = 2,
+        rpc_port: int,
+        **kwargs,
     ):
-        self.resource_cls = resource_cls
-        self.resource_name = resource_name
-        rpc_port, version = sync_up(host, port, timeout)
-        check_for_version_compatibility(version)
-        self.ctx = zmq.Context.instance()
-        self.socket = self.ctx.socket(zmq.REQ)
-        self.socket.identity = f"{platform.node()}-PyVisaProxyClient".encode()
-        self.socket.connect(f"tcp://{host}:{rpc_port}")
+        self._rpc_client = RpcClient(host, rpc_port)
+        self._resource_cls = resource_cls
+        self._resource_name = resource_name
+        # Open the resource
+        self._rpc_client.request(
+            None, "open_resource", args=(resource_name,), kwargs=kwargs
+        )
 
-    def __enter__(self):
-        return self
+    def __del__(self) -> None:
+        return self.close()
 
-    def __exit__(self, exc_type, exc_value, trace):
-        self.close()
+    def close(self) -> None:
+        """Close remote session and zmq connection"""
+        if self._rpc_client is not None:
+            self._rpc_client.request(None, "close_resource")
+            self._rpc_client.close()
+            self._rpc_client = None
+        return None
 
-    def __del__(self):
-        self.close()
-
-    def close(self):
-        """Close zmq connection"""
-        self.socket.close()
-
-    @staticmethod
-    def is_fixed_attr(name: str):
+    def _is_fixed_attr(self, name: str) -> bool:
         return name in [
-            "resource_cls",
-            "resource_name",
-            "ctx",
-            "socket",
-            "is_fixed_attr",
+            "_rpc_client",
+            "_resource_cls",
+            "_resource_name",
+            "_request",
+            "_is_fixed_attr",
             "close",
         ]
 
@@ -99,18 +54,18 @@ class ProxyResource:
         :return: Any value
         :rtype: Any
         """
-        if self.is_fixed_attr(name):
+        if self._is_fixed_attr(name):
             return self[name]
-        attr = getattr(self.resource_cls, name)
+        attr = getattr(self._resource_cls, name)
         if callable(attr):
 
             def wrapper(*args, **kwargs):
-                return self._request(
-                    name, "getattr", *args, value=None, **kwargs
+                return self._rpc_client.request(
+                    name, "getattr", args=args, kwargs=kwargs
                 )
 
             return wrapper
-        return self._request(name, "getattr", None, None, None)
+        return self._rpc_client.request(name, "getattr")
 
     def __setattr__(self, name, value):
         """Set a value at the remote VISA VisaRemoteClient.
@@ -123,39 +78,10 @@ class ProxyResource:
         :return: Usually None
         :rtype: Any
         """
-        if self.is_fixed_attr(name):
+        if self._is_fixed_attr(name):
             super().__setattr__(name, value)
             return
-        attr = getattr(self.resource_cls, name)
+        attr = getattr(self._resource_cls, name)
         if callable(attr):
             raise AttributeError("Set should not be a callable")
-        return self._request(name, "setattr", value, None, None)
-
-    def _request(self, name: str, action: str, *args, value=None, **kwargs):
-        """Send request via zmq to server.
-
-        :param name: attribute name
-        :type name: str
-        :param action: __getattr__ or __setattr__
-        :type action: str
-        :param value: Value for __setattr__, defaults to None
-        :type value: Any, optional
-        :raises Exception: reraise Exception from server at client side
-        :return: Any provided value
-        :rtype: Any
-        """
-        message = {
-            "resources": self.resource_name,
-            "name": name,
-            "action": action,
-            "value": value,
-            "args": args,
-            "kwargs": kwargs,
-        }
-        self.socket.send(cbor.dumps(message))
-        rep = cbor.loads(self.socket.recv())
-        if "exception" in rep:
-            # Unfortunately, no simple and lightweight solution"
-            # https://stackoverflow.com/a/45241491
-            reraise(*pickle.loads(rep["exception"]))
-        return rep["value"]
+        return self._rpc_client.request(name, "setattr", value=value)

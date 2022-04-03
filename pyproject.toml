@@ -10,7 +10,7 @@ profile = "black"
 src_paths = ["src", "tests"]
 
 [tool.coverage.run]
-source = ["pysomq"]
+source = ["pyvisa_proxy"]
 
 [tool.coverage.paths]
 source = ["src", ".tox/*/site-packages"]

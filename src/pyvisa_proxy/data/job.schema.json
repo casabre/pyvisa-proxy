@@ -3,17 +3,24 @@
     "type": "object",
     "additionalProperties": false,
     "properties": {
-        "resource": {
-            "type": "string"
-        },
         "name": {
-            "type": "string"
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ]
         },
         "action": {
             "type": "string",
             "enum": [
                 "getattr",
-                "setattr"
+                "setattr",
+                "list_resources",
+                "open_resource",
+                "close_resource"
             ]
         },
         "value": {
@@ -50,7 +57,7 @@
             "type": "object",
             "properties": {
                 "action": {
-                    "const": "__setattr__"
+                    "const": "setattr"
                 }
             },
             "required": [
@@ -61,7 +68,43 @@
             "type": "object",
             "properties": {
                 "action": {
-                    "const": "__getattr__"
+                    "const": "getattr"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "list_resources"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "open_resource"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "close_resource"
                 }
             },
             "required": [
@@ -72,8 +115,7 @@
     ],
     "required": [
         "action",
-        "name",
-        "resource"
+        "name"
     ],
     "title": "Visa job",
     "definitions": {
