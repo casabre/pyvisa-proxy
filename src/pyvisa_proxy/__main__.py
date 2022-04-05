@@ -1,5 +1,11 @@
 """
-Run PyVISA-proxy server as service
+    pyvisa-proxy.__main__
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Run PyVISA-proxy server as service.
+
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+    :license: MIT, see LICENSE for more details.
 """
 import argparse
 import logging
@@ -11,7 +17,7 @@ LOGGER = logging.getLogger(__name__)
 
 
 def main(port: int, backend: str = ""):
-    """Running PyVISA proxy server."""
+    """Run a PyVISA proxy server."""
 
     with ProxyServer(port, backend) as server:
         register(lambda: server.close())

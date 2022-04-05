@@ -1,5 +1,11 @@
 """
-PyVISA-proxy server which provides access to VISA handles
+    pyvisa-proxy.ProxyServer
+    ~~~~~~~~~~~~~~~~~~~~
+
+    PyVISA-proxy server which provides access to VISA handles.
+
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+    :license: MIT, see LICENSE for more details.
 """
 import asyncio
 import json
@@ -50,8 +56,20 @@ with open(
 
 
 def sync_up(sync_port: int, rpc_port: int, backend: str, version: str):
+    """
+    Provide an endpoint for Server - Client synchronization.
+
+    :param sync_port: Socket port for synchronization.
+    :type sync_port: int
+    :param rpc_port: Socket port for RPC calls.
+    :type rpc_port: int
+    :param backend: Set PyVISA backend.
+    :type backend: str
+    :param version: Package version.
+    :type version: str
+    """
     ctx = zmq.asyncio.Context.instance()
-    socket = ctx.socket(zmq.ROUTER)
+    socket = ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
     socket.bind(f"tcp://*:{sync_port}")
     register(lambda: socket.close())
 
@@ -70,7 +88,8 @@ def sync_up(sync_port: int, rpc_port: int, backend: str, version: str):
 
 
 class ProxyServer:
-    """PyVISA remote proxy server which handles incoming VISA calls.
+    """
+    PyVISA remote proxy server which handles incoming VISA calls.
 
     :param object: object base class
     :type object: object
@@ -79,9 +98,9 @@ class ProxyServer:
     def __init__(self, port: int, backend: str = ""):
         self._rm = pyvisa.ResourceManager(backend)
         self.ctx = zmq.asyncio.Context.instance()
-        self._socket = self.ctx.socket(zmq.ROUTER)
+        self._socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
         rpc_port = self._socket.bind_to_random_port("tcp://*")
-        self._sync_process = Process(
+        self._sync_process: typing.Optional[Process] = Process(
             target=sync_up,
             args=(
                 port,
@@ -91,7 +110,7 @@ class ProxyServer:
             ),
         )
         self._sync_process.start()
-        self._visa = {}
+        self._visa: typing.Dict[str, list] = {}
         self._stop = Event()
 
     def __enter__(self):
@@ -120,9 +139,7 @@ class ProxyServer:
         asyncio.run(self._run())
 
     async def _run(self):
-        """
-        Async runner
-        """
+        """Async runner."""
         while not self._stop.is_set():
             polled = await self._socket.poll(100)
             if polled == 0:
@@ -242,7 +259,7 @@ class ProxyServer:
         :rtype: pyvisa.Resource
         """
         if identity not in self._visa:
-            raise InvalidSession(f"VISA handle registered for {identity}")
+            raise InvalidSession()
         self._visa[identity][1] = time.time()
         return self._visa[identity][0]
 

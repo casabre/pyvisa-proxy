@@ -1,6 +1,14 @@
 """
-PyVISA-proxy resource which accesses VISA handles at server side
+    pyvisa-proxy.ProxyResource
+    ~~~~~~~~~~~~~~~~~~~~
+
+    PyVISA-proxy resource which accesses VISA handles at server side.
+
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+    :license: MIT, see LICENSE for more details.
 """
+import typing
+
 from pyvisa import Resource
 
 from .RpcClient import RpcClient
@@ -17,7 +25,9 @@ class ProxyResource(Resource):
         rpc_port: int,
         **kwargs,
     ):
-        self._rpc_client = RpcClient(host, rpc_port)
+        self._rpc_client: typing.Optional[RpcClient] = RpcClient(
+            host, rpc_port
+        )
         self._resource_cls = resource_cls
         self._resource_name = resource_name
         # Open the resource
@@ -60,12 +70,14 @@ class ProxyResource(Resource):
         if callable(attr):
 
             def wrapper(*args, **kwargs):
-                return self._rpc_client.request(
+                return typing.cast(RpcClient, self._rpc_client).request(
                     name, "getattr", args=args, kwargs=kwargs
                 )
 
             return wrapper
-        return self._rpc_client.request(name, "getattr")
+        return typing.cast(RpcClient, self._rpc_client).request(
+            name, "getattr"
+        )
 
     def __setattr__(self, name, value):
         """Set a value at the remote VISA VisaRemoteClient.
@@ -84,4 +96,6 @@ class ProxyResource(Resource):
         attr = getattr(self._resource_cls, name)
         if callable(attr):
             raise AttributeError("Set should not be a callable")
-        return self._rpc_client.request(name, "setattr", value=value)
+        return typing.cast(RpcClient, self._rpc_client).request(
+            name, "setattr", value=value
+        )

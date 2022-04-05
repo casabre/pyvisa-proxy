@@ -1,5 +1,12 @@
 """
-PyVISA-proxy RPC-client which accesses corresponding attributes at server side.
+    pyvisa-proxy.RpcClient
+    ~~~~~~~~~~~~~~~~~~~~
+
+    PyVISA-proxy RPC-client which accesses corresponding attributes at server
+    side.
+
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+    :license: MIT, see LICENSE for more details.
 """
 import logging
 import platform
@@ -23,7 +30,7 @@ class RpcClient(object):
         self._rpc_port = rpc_port
         self._identity = f"{platform.node()}.{uuid.uuid4()}"
         self._ctx = zmq.Context.instance()
-        self._socket = self._ctx.socket(zmq.REQ)
+        self._socket = self._ctx.socket(zmq.REQ)  # pylint: disable=E1101
         self._socket.identity = self._identity.encode()
         self._socket.connect(f"tcp://{host}:{self._rpc_port}")
 
@@ -42,7 +49,7 @@ class RpcClient(object):
         args: tuple = (),
         value=None,
         kwargs: dict = {},
-    ) -> any:
+    ) -> typing.Any:
         """Send request via zmq to server.
 
         :param name: attribute name

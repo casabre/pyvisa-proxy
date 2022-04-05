@@ -131,3 +131,5 @@ dmypy.json
 # Temporary version file
 _version.py
 .vscode/*
+flake.json
+pylint.json

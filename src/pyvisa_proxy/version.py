@@ -1,3 +1,12 @@
+"""
+    pyvisa-proxy.version
+    ~~~~~~~~~~~~~~~~~~~~
+
+    Retrieve version of package.
+
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+    :license: MIT, see LICENSE for more details.
+"""
 import sys
 
 if sys.version_info >= (3, 8):
@@ -7,6 +16,7 @@ else:
 
 
 def get_version():
+    """Retrieve the package version."""
     try:
         return version("pyvisa-proxy")
     except PackageNotFoundError:

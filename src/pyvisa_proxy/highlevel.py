@@ -1,11 +1,10 @@
-# -*- coding: utf-8 -*-
 """
-    pyvisa-sim.highlevel
+    pyvisa-proxy.highlevel
     ~~~~~~~~~~~~~~~~~~~~
 
-    Simulated VISA Library.
+    Remote VISA Library.
 
-    :copyright: 2014 by PyVISA-sim Authors, see AUTHORS for more details.
+    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
     :license: MIT, see LICENSE for more details.
 """
 
@@ -20,7 +19,7 @@ import dill as pickle
 import pyvisa.errors as errors
 import zmq
 from packaging.version import parse
-from pyvisa import constants, highlevel
+from pyvisa import Resource, constants, highlevel
 from pyvisa.util import LibraryPath
 
 from .ProxyResource import ProxyResource
@@ -40,7 +39,7 @@ class CompatibilityError(Exception):
 
 def sync_up(host: str, sync_port: int, timeout: int):
     ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REQ)
+    socket = ctx.socket(zmq.REQ)  # pylint: disable=E1101
     socket.identity = f"{platform.node()}.{uuid.uuid4()}".encode()
     socket.connect(f"tcp://{host}:{sync_port}")
     try:
@@ -72,16 +71,20 @@ def check_for_version_compatibility(version):
 class ProxyVisaLibrary(highlevel.VisaLibraryBase):
     """A pure Python backend for PyVISA.
 
-    The object is basically a dispatcher with some common functions implemented.
+    The object is basically a dispatcher with some common functions
+    implemented.
 
-    When a new resource object is requested to pyvisa, the library creates a Session object
-    (that knows how to perform low-level communication operations) associated with a session handle
-    (a number, usually refered just as session).
+    When a new resource object is requested to pyvisa, the library creates a
+    Session object (that knows how to perform low-level communication
+    operations) associated with a session handle (a number, usually refered
+    just as session).
 
-    A call to a library function is handled by PyVisaLibrary if it involves a resource agnostic
-    function or dispatched to the correct session object (obtained from the session id).
+    A call to a library function is handled by PyVisaLibrary if it involves
+    a resource agnostic function or dispatched to the correct session
+    object (obtained from the session id).
 
-    Importantly, the user is unaware of this. PyVisaLibrary behaves for the user just as NIVisaLibrary.
+    Importantly, the user is unaware of this. PyVisaLibrary behaves for the
+    user just as NIVisaLibrary.
     """
 
     def __del__(self):
@@ -186,7 +189,8 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
 
         Corresponds to viClose function of the VISA library.
 
-        :param session: Unique logical identifier to a session, event, or find list.
+        :param session: Unique logical identifier to a session, event, or
+            find list.
         :return: return value of the library call.
         :rtype: :class:`pyvisa.constants.StatusCode`
         """
@@ -197,11 +201,12 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
             return constants.StatusCode.error_invalid_object
 
     def open_default_resource_manager(self):
-        """This function returns a session to the Default Resource Manager resource.
+        """Returns a session to the Default Resource Manager resource.
 
         Corresponds to viOpenDefaultRM function of the VISA library.
 
-        :return: Unique logical identifier to a Default Resource Manager session, return value of the library call.
+        :return: Unique logical identifier to a Default Resource Manager
+            session, return value of the library call.
         :rtype: session, :class:`pyvisa.constants.StatusCode`
         """
         return self._register(self), constants.StatusCode.success
@@ -251,7 +256,8 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         :param session: Unique logical identifier to a session.
         :param data: data to be written.
         :type data: str
-        :return: Number of bytes actually transferred, return value of the library call.
+        :return: Number of bytes actually transferred, return value of the
+            library call.
         :rtype: int, :class:`pyvisa.constants.StatusCode`
         """
 
@@ -270,10 +276,14 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
 
         Corresponds to viGetAttribute function of the VISA library.
 
-        :param session: Unique logical identifier to a session, event, or find list.
-        :param attribute: Resource attribute for which the state query is made (see Attributes.*)
-        :return: The state of the queried attribute for a specified resource, return value of the library call.
-        :rtype: unicode (Py2) or str (Py3), list or other type, :class:`pyvisa.constants.StatusCode`
+        :param session: Unique logical identifier to a session, event, or
+            find list.
+        :param attribute: Resource attribute for which the state query is
+            made (see Attributes.*)
+        :return: The state of the queried attribute for a specified resource,
+            return value of the library call.
+        :rtype: unicode (Py2) or str (Py3), list or other type,
+            :class:`pyvisa.constants.StatusCode`
         """
         try:
             sess = self.sessions[session]
@@ -288,8 +298,10 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         Corresponds to viSetAttribute function of the VISA library.
 
         :param session: Unique logical identifier to a session.
-        :param attribute: Attribute for which the state is to be modified. (Attributes.*)
-        :param attribute_state: The state of the attribute to be set for the specified object.
+        :param attribute: Attribute for which the state is to be
+            modified. (Attributes.*)
+        :param attribute_state: The state of the attribute to be set
+            for the specified object.
         :return: return value of the library call.
         :rtype: :class:`pyvisa.constants.StatusCode`
         """
