@@ -10,8 +10,21 @@ from .utils import recv_compare_and_reply, sync_up_reply
 
 
 @pytest.fixture
-def resource_name() -> str:
-    return "USB::0x1111::0x2222::0x4444::INSTR"
+def resource_name(rm_sim) -> str:
+    resources = rm_sim.list_resources()
+    return resources[0]
+
+
+@pytest.fixture
+def query_string() -> str:
+    return "?IDN"
+
+
+@pytest.fixture
+def idn_string(rm_sim, resource_name, query_string) -> str:
+    instr = rm_sim.open_resource(resource_name)
+    idn = instr.query(query_string)
+    return idn
 
 
 @pytest.fixture

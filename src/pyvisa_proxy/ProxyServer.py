@@ -96,16 +96,18 @@ class ProxyServer:
     """
 
     def __init__(self, port: int, backend: str = ""):
+        self._backend = backend
         self._rm = pyvisa.ResourceManager(backend)
         self.ctx = zmq.asyncio.Context.instance()
         self._socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
-        rpc_port = self._socket.bind_to_random_port("tcp://*")
+        self._sync_port = port
+        self._rpc_port = self._socket.bind_to_random_port("tcp://*")
         self._sync_process: typing.Optional[Process] = Process(
             target=sync_up,
             args=(
-                port,
-                rpc_port,
-                backend,
+                self._sync_port,
+                self._rpc_port,
+                self._backend,
                 VERSION,
             ),
         )
@@ -136,7 +138,13 @@ class ProxyServer:
 
     def run(self):
         """Run server with asyncio runner"""
-        asyncio.run(self._run())
+        LOGGER.info("Starting PyVISA Proxy Server.")
+        LOGGER.info(f"PyVISA-proxy version: {VERSION}")
+        if self._backend != "":
+            LOGGER.info(f"PyVISA backend: {self._backend}")
+        LOGGER.info(f"Synchronization port: {self._sync_port}")
+        LOGGER.info(f"RPC port: {self._rpc_port}")
+        return asyncio.run(self._run())
 
     async def _run(self):
         """Async runner."""

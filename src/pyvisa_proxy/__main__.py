@@ -22,6 +22,7 @@ def main(port: int, backend: str = ""):
     with ProxyServer(port, backend) as server:
         register(lambda: server.close())
         server.run()
+        LOGGER.info("Server is shutting down.")
 
 
 if __name__ == "__main__":

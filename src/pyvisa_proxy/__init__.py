@@ -8,6 +8,7 @@
     :license: MIT, see LICENSE for more details.
 """
 
+from .__main__ import main  # noqa
 from .highlevel import ProxyVisaLibrary
 from .ProxyServer import ProxyServer
 from .version import get_version
