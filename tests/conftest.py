@@ -41,7 +41,7 @@ def sync_port(rpc_port) -> int:
 def executor() -> ThreadPoolExecutor:
     executor = ThreadPoolExecutor()
     yield executor
-    executor.shutdown(wait=False, cancel_futures=True)
+    executor.shutdown(wait=False)
 
 
 @pytest.fixture
