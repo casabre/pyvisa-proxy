@@ -127,7 +127,7 @@ def test_getattr(proxy_server, proxy_resource, resource_name):
     assert id in proxy_server._visa
     message = create_message("timeout", "getattr")
     rep = send_command(proxy_resource, message)
-    assert rep == 0
+    assert rep == 2000
 
 
 def test_setattr(proxy_server, proxy_resource, resource_name):
