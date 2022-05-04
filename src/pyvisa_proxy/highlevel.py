@@ -20,6 +20,8 @@ import pyvisa.errors as errors
 import zmq
 from packaging.version import parse
 from pyvisa import Resource, constants, highlevel
+from pyvisa.constants import StatusCode
+from pyvisa.typing import VISASession
 from pyvisa.util import LibraryPath
 
 from .ProxyResource import ProxyResource
@@ -135,6 +137,33 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
 
         self.sessions[session] = obj
         return session
+
+    def open(
+        self,
+        session,
+        resource_name,
+        access_mode=constants.AccessModes.no_lock,
+        open_timeout=constants.VI_TMO_IMMEDIATE,
+    ) -> typing.Tuple[VISASession, StatusCode]:
+        """Opens a session to the specified resource.
+
+        Corresponds to viOpen function of the VISA library.
+
+        :param session: Resource Manager session
+                        (should always be a session returned
+                        from open_default_resource_manager()).
+        :param resource_name: Unique symbolic name of a resource.
+        :param access_mode: Specifies the mode by which the resource is to be accessed. (constants.AccessModes)
+        :param open_timeout: Specifies the maximum time period (in milliseconds) that this operation waits
+                             before returning an error.
+        :return: Unique logical identifier reference to a session, return value of the library call.
+        :rtype: session, :class:`pyvisa.constants.StatusCode`
+        """
+
+        # Do not support it currently
+        raise NotImplementedError(
+            "Opening a bare resource is currently not suported."
+        )
 
     def open_resource(
         self,
@@ -314,9 +343,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         return sess.set_attribute(attribute, attribute_state)
 
     def disable_event(self, session, event_type, mechanism):
-        # TODO: implement this for GPIB finalization
         pass
 
     def discard_events(self, session, event_type, mechanism):
-        # TODO: implement this for GPIB finalization
         pass
