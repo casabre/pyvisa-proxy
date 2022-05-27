@@ -1,10 +1,38 @@
-# PyVISA-remote
+# PyVISA-proxy
 
-This plugin should extend pyvisa's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB.
+This plugin should extend PyVISA's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB. In the end, you can decouple your VISA instrument hosting where you need bare metal nodes and the test script runner.
 
 ## Getting started
 
-Under development.
+### Installation
+
+Using pip:
+
+```shell
+pip install pyvisa-proxy
+```
+
+### Server
+
+In order to make devices remotely available, just run the PyVISA-remote server on your node. The server will open new VISA resources per request. Just run
+
+```shell
+python -m pyivsa_proxy --port 5000
+```
+
+in order to host your "local" connections. Use any available port for network sharing.
+
+### Client
+
+Use a client like a normal PyVISA class. The calls will be forwarded by reflection to the server. In order to get started, use the following snippet in your code.
+
+```python
+import pyvisa
+
+rm = pyvisa.ResourceManager("YourProxyServerIp:YourProxyServerPort@proxy")
+instr = rm.open_resource(resource="GPIB0::1::INSTR")
+print(instr.query("*IDN?"))
+```
 
 ## Contributing
 

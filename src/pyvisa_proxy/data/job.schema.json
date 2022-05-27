@@ -1,0 +1,188 @@
+{
+    "$schema": "http://json-schema.org/draft-06/schema#",
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {
+        "name": {
+            "anyOf": [
+                {
+                    "type": "string"
+                },
+                {
+                    "type": "null"
+                }
+            ]
+        },
+        "action": {
+            "type": "string",
+            "enum": [
+                "getattr",
+                "setattr",
+                "list_resources",
+                "open_resource",
+                "close_resource"
+            ]
+        },
+        "value": {
+            "anyOf": [
+                {
+                    "type": "integer"
+                },
+                {
+                    "type": "number"
+                },
+                {
+                    "type": "object"
+                },
+                {
+                    "type": "array"
+                },
+                {
+                    "type": "null"
+                },
+                {
+                    "type": "string"
+                }
+            ]
+        },
+        "args": {
+            "$ref": "#/definitions/Args"
+        },
+        "kwargs": {
+            "$ref": "#/definitions/Kwargs"
+        }
+    },
+    "anyOf": [
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "setattr"
+                }
+            },
+            "required": [
+                "value"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "getattr"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "list_resources"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "open_resource"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        },
+        {
+            "type": "object",
+            "properties": {
+                "action": {
+                    "const": "close_resource"
+                }
+            },
+            "required": [
+                "args",
+                "kwargs"
+            ]
+        }
+    ],
+    "required": [
+        "action",
+        "name"
+    ],
+    "title": "Visa job",
+    "definitions": {
+        "Kwargs": {
+            "anyOf": [
+                {
+                    "type": "object",
+                    "additionalProperties": true,
+                    "anyOf": [
+                        {
+                            "type": "integer"
+                        },
+                        {
+                            "type": "number"
+                        },
+                        {
+                            "type": "object"
+                        },
+                        {
+                            "type": "array"
+                        },
+                        {
+                            "type": "null"
+                        },
+                        {
+                            "type": "string"
+                        }
+                    ]
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "title": "Kwargs"
+        },
+        "Args": {
+            "anyOf": [
+                {
+                    "type": "array",
+                    "items": {
+                        "anyOf": [
+                            {
+                                "type": "integer"
+                            },
+                            {
+                                "type": "number"
+                            },
+                            {
+                                "type": "string"
+                            },
+                            {
+                                "type": "array"
+                            },
+                            {
+                                "type": "object"
+                            },
+                            {
+                                "type": "null"
+                            }
+                        ]
+                    }
+                },
+                {
+                    "type": "null"
+                }
+            ],
+            "title": "Args"
+        }
+    }
+}
