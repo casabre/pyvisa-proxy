@@ -166,7 +166,8 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         """
         # Do not support it currently
         raise NotImplementedError(
-            "Opening a bare resource is currently not suported."
+            "Opening a bare resource remotely is currently not suported. \
+            Planned for version 0.2.0"
         )
 
     def open_resource(
