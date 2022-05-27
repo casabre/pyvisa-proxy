@@ -39,3 +39,6 @@ jobs:
       - name: Convert coverage
         run: |
           tox -e coverage
+      - uses: codecov/codecov-action@v2
+        with:
+          files: ./coverage.xml
