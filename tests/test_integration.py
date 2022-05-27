@@ -1,3 +1,5 @@
+from multiprocessing import Process
+
 import pytest
 import pyvisa
 from packaging.version import parse
@@ -21,14 +23,18 @@ def test_integration_with_class(
 
 
 def test_integration_with_main(
-    sync_port, resource_name, executor, rm_sim, idn_string, query_string
+    sync_port, resource_name, rm_sim, idn_string, query_string
 ):
     if parse(pyvisa.__version__) < parse("1.12.0"):
         pytest.skip("PyVISA-proxy implementation in PyVISA is missing.")
-    executor.submit(main, sync_port, "@sim")
-    get_resource_and_test(
-        sync_port, resource_name, rm_sim, idn_string, query_string
-    )
+    executor = Process(target=main, args=(sync_port, "@sim"))
+    try:
+        executor.start()
+        get_resource_and_test(
+            sync_port, resource_name, rm_sim, idn_string, query_string
+        )
+    finally:
+        executor.terminate()
 
 
 def get_resource_and_test(

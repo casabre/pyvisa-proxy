@@ -10,6 +10,7 @@
 import argparse
 import logging
 from atexit import register
+from weakref import WeakMethod
 
 from .ProxyServer import ProxyServer
 
@@ -18,11 +19,17 @@ LOGGER = logging.getLogger(__name__)
 
 def main(port: int, backend: str = ""):
     """Run a PyVISA proxy server."""
+    server = ProxyServer(port, backend)
+    close_ref = WeakMethod(server.close)
 
-    with ProxyServer(port, backend) as server:
-        register(lambda: server.close())
-        server.run()
-        LOGGER.info("Server is shutting down.")
+    def call_close():
+        meth = close_ref()
+        if meth:
+            meth()
+
+    register(call_close)
+    server.run()
+    LOGGER.info("Server is shutting down.")
 
 
 if __name__ == "__main__":

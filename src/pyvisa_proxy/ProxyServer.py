@@ -14,8 +14,7 @@ import os
 import sys
 import time
 import typing
-from atexit import register
-from multiprocessing import Process
+from abc import ABC, abstractmethod
 from threading import Event
 
 import dill as pickle
@@ -55,108 +54,66 @@ with open(
     )(schema=schema)
 
 
-def sync_up(sync_port: int, rpc_port: int, backend: str, version: str):
-    """
-    Provide an endpoint for Server - Client synchronization.
+class ProcessorInterface(ABC):
+    @abstractmethod
+    def close(self):
+        pass
 
-    :param sync_port: Socket port for synchronization.
-    :type sync_port: int
-    :param rpc_port: Socket port for RPC calls.
-    :type rpc_port: int
-    :param backend: Set PyVISA backend.
-    :type backend: str
-    :param version: Package version.
-    :type version: str
-    """
-    ctx = zmq.asyncio.Context.instance()
-    socket = ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
-    socket.bind(f"tcp://*:{sync_port}")
-    register(lambda: socket.close())
-
-    async def run():
-        nonlocal socket
-        while True:
-            address, _, _ = await socket.recv_multipart()
-            reply = {
-                "rpc_port": rpc_port,
-                "backend": backend,
-                "version": version,
-            }
-            await socket.send_multipart([address, b"", pickle.dumps(reply)])
-
-    asyncio.run(run())
+    @abstractmethod
+    async def call(self):
+        pass
 
 
-class ProxyServer:
-    """
-    PyVISA remote proxy server which handles incoming VISA calls.
-
-    :param object: object base class
-    :type object: object
-    """
-
-    def __init__(self, port: int, backend: str = ""):
-        self._backend = backend
-        self._rm = pyvisa.ResourceManager(backend)
+class SynchronizationProcessor(ProcessorInterface):
+    def __init__(
+        self, sync_port: int, rpc_port: int, backend: str, version: str
+    ):
         self.ctx = zmq.asyncio.Context.instance()
-        self._socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
-        self._sync_port = port
-        self._rpc_port = self._socket.bind_to_random_port("tcp://*")
-        self._sync_process: typing.Optional[Process] = Process(
-            target=sync_up,
-            args=(
-                self._sync_port,
-                self._rpc_port,
-                self._backend,
-                VERSION,
-            ),
-        )
-        self._sync_process.start()
-        self._visa: typing.Dict[str, list] = {}
-        self._stop = Event()
-
-    def __enter__(self):
-        return self
-
-    def __exit__(self, exc_type, exc_value, trace):
-        self.close()
-
-    def __del__(self):
-        self.close()
+        self.socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
+        self.socket.bind(f"tcp://*:{sync_port}")
+        self.port = sync_port
+        self.rpc_port = rpc_port
+        self.backend = backend
+        self.version = version
 
     def close(self):
-        """Close sync-process, zmq connection and VISA handles"""
-        self._stop.set()
-        if self._socket is not None:
-            self._socket.close()
-            self._socket = None
-        if self._sync_process is not None:
-            self._sync_process.terminate()
-            self._sync_process = None
-        for handle in list(self._visa.values()):
+        if self.socket:
+            self.socket.close()
+
+    async def call(self):
+        """Process synchronization call."""
+        address, _, _ = await self.socket.recv_multipart()
+        reply = {
+            "rpc_port": self.rpc_port,
+            "backend": self.backend,
+            "version": self.version,
+        }
+        await self.socket.send_multipart([address, b"", pickle.dumps(reply)])
+
+
+class RpcProcessor(ProcessorInterface):
+    def __init__(self, backend: str):
+        self.rm = pyvisa.ResourceManager(backend)
+        self.visa: typing.Dict[str, list] = {}
+        self.ctx = zmq.asyncio.Context.instance()
+        self.socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
+        self.port = self.socket.bind_to_random_port("tcp://*")
+
+    def close(self):
+        for handle in list(self.visa.values()):
             handle[0].close()
+        if self.socket:
+            self.socket.close()
 
-    def run(self):
-        """Run server with asyncio runner"""
-        LOGGER.info("Starting PyVISA Proxy Server.")
-        LOGGER.info(f"PyVISA-proxy version: {VERSION}")
-        if self._backend != "":
-            LOGGER.info(f"PyVISA backend: {self._backend}")
-        LOGGER.info(f"Synchronization port: {self._sync_port}")
-        LOGGER.info(f"RPC port: {self._rpc_port}")
-        return asyncio.run(self._run())
+    async def call(self):
+        """Process RPC call."""
+        identity, _, request = await self.socket.recv_multipart()
+        job_data = pickle.loads(request)
+        LOGGER.debug(f"Job {job_data} from {identity}")
+        reply = await self._call_pyvisa(identity, job_data)
+        await self.socket.send_multipart([identity, b"", pickle.dumps(reply)])
 
-    async def _run(self):
-        """Async runner."""
-        while not self._stop.is_set():
-            polled = await self._socket.poll(100)
-            if polled == 0:
-                continue
-            msg = await self._socket.recv_multipart()
-            reply = await self._call_pyvisa(msg)
-            await self._socket.send_multipart(reply)
-
-    async def _call_pyvisa(self, msg):
+    async def _call_pyvisa(self, identity: bytes, job_data: dict) -> dict:
         """Call pyvisa with job information from client.
 
         :param msg: job description message
@@ -164,9 +121,6 @@ class ProxyServer:
         :return: Result data
         :rtype: zmq.Frame
         """
-        identity, _, request = msg
-        job_data = pickle.loads(request)
-        LOGGER.debug(f"Job {job_data} from {identity}")
         result = {}
         try:
             VALIDATOR.validate(job_data, schema)
@@ -179,7 +133,7 @@ class ProxyServer:
         else:
             LOGGER.debug(f"Job {job_data} from {identity} result: {res}")
             result["value"] = res
-        return [identity, b"", pickle.dumps(result)]
+        return result
 
     async def _execute_job(
         self, identity: str, job_data: dict
@@ -208,7 +162,7 @@ class ProxyServer:
         loop = asyncio.get_running_loop()
         args, kwargs = self._get_args_and_kwargs(job_data)
         instruments = await loop.run_in_executor(
-            None, lambda: self._rm.list_resources(*args, **kwargs)
+            None, lambda: self.rm.list_resources(*args, **kwargs)
         )
         return instruments
 
@@ -266,10 +220,10 @@ class ProxyServer:
         :return: pyvisa resource handle
         :rtype: pyvisa.Resource
         """
-        if identity not in self._visa:
+        if identity not in self.visa:
             raise InvalidSession()
-        self._visa[identity][1] = time.time()
-        return self._visa[identity][0]
+        self.visa[identity][1] = time.time()
+        return self.visa[identity][0]
 
     async def _create_visa_handle(self, identity: str, *args, **kwargs):
         """Create a VISA handle with given resource, args and kwargs."""
@@ -282,24 +236,91 @@ class ProxyServer:
             "open_timeout", pyvisa.constants.VI_TMO_IMMEDIATE
         )
         or_kwargs["resource_pyclass"] = kwargs.pop("resource_pyclass", None)
-        self._visa[identity] = [
+        self.visa[identity] = [
             await loop.run_in_executor(
                 None,
-                lambda: self._rm.open_resource(*args, **or_kwargs),
+                lambda: self.rm.open_resource(*args, **or_kwargs),
             ),
             time.time(),
         ]
         for key, value in kwargs.items():
             await loop.run_in_executor(
-                None, setattr, self._visa[identity], key, value
+                None, setattr, self.visa[identity], key, value
             )
 
     async def _delete_visa_handle(self, identity: str, *args, **kwargs):
         """Close a VISA handle and delete it from storage."""
         loop = asyncio.get_running_loop()
-        handle = self._visa[identity][0]
+        handle = self.visa[identity][0]
         await loop.run_in_executor(
             None,
             handle.close,
         )
-        del self._visa[identity]
+        del self.visa[identity]
+
+
+class ProxyServer:
+    """
+    PyVISA remote proxy server which handles incoming VISA calls.
+
+    :param object: object base class
+    :type object: object
+    """
+
+    def __init__(self, port: int, backend: str = ""):
+        """Initialize proxy server."""
+        self._stop = Event()
+        self._poller = zmq.Poller()
+        self._rpc_processor = RpcProcessor(backend)
+        self._sync_processor = SynchronizationProcessor(
+            port, self._rpc_processor.port, backend, VERSION
+        )
+        self._poller.register(self._rpc_processor.socket, zmq.POLLIN)
+        self._poller.register(self._sync_processor.socket, zmq.POLLIN)
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, exc_type, exc_value, trace):
+        self.close()
+
+    def __del__(self):
+        self.close()
+
+    def close(self):
+        """Close sync-process, zmq connection and VISA handles"""
+        self._stop.set()
+        if hasattr(self, "_rpc_processor") and self._rpc_processor is not None:
+            self._rpc_processor.close()
+            self._rpc_processor = None
+        if (
+            hasattr(self, "_sync_processor")
+            and self._sync_processor is not None
+        ):
+            self._sync_processor.close()
+            self._sync_processor = None
+
+    def run(self) -> None:
+        """Run server with asyncio runner"""
+        LOGGER.info("Starting PyVISA Proxy Server.")
+        LOGGER.info(f"PyVISA-proxy version: {VERSION}")
+        if self._sync_processor.backend != "":
+            LOGGER.info(f"PyVISA backend: {self._sync_processor.backend}")
+        LOGGER.info(f"Synchronization port: {self._sync_processor.port}")
+        LOGGER.info(f"RPC port: {self._rpc_processor.port}")
+        asyncio.run(self._run())
+
+    async def _run(self):
+        """Async runner."""
+        while not self._stop.is_set():
+            socks = dict(self._poller.poll(100))
+            if (
+                self._sync_processor.socket in socks
+                and socks[self._sync_processor.socket] == zmq.POLLIN
+            ):
+                await self._sync_processor.call()
+            if (
+                self._rpc_processor.socket in socks
+                and socks[self._rpc_processor.socket] == zmq.POLLIN
+            ):
+                await self._rpc_processor.call()

@@ -37,7 +37,7 @@ def sync_port(rpc_port) -> int:
     return rpc_port + 1
 
 
-@pytest.fixture(scope="session")
+@pytest.fixture
 def executor() -> ThreadPoolExecutor:
     executor = ThreadPoolExecutor()
     yield executor
