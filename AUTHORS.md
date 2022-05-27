@@ -1,2 +1,0 @@
-pyvisa-proxy is written and maintained by Carsten Sauerbrey
-carsten.sauerbrey@gmail.com

@@ -17,15 +17,16 @@ You can select the PyVISA-proxy backend using **@proxy** with the PyVISA proxy
 server IP address when instantiating the visa Resource Manager:
 
     >>> import visa
-    >>> rm = visa.ResourceManager('YourProxyServerIp@proxy')
+    >>> rm = visa.ResourceManager('YourProxyServerIp:YourProxyServerPort@proxy')
     >>> rm.list_resources()
     ('ASRL1::INSTR')
     >>> inst = rm.open_resource('ASRL1::INSTR', read_termination='\n')
     >>> print(inst.query("?IDN"))
 
 
-That's all! Except for **YourProxyServerIp@proxy**, the code is exactly what
-you would write in order to use the VISA backend for PyVISA.
+That's all! Except for **YourProxyServerIp:YourProxyServerPort@proxy**, the
+code is exactly what you would write in order to use the VISA backend for
+PyVISA.
 
 Installation
 ============

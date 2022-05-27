@@ -1,4 +1,5 @@
 # PyVISA-proxy
+
 =======
 
 This plugin should extend PyVISA's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB. In the end, you can decouple your VISA instrument hosting where you need bare metal nodes and the test script runner.
@@ -30,9 +31,9 @@ Use a client like a normal PyVISA class. The calls will be forwarded by reflecti
 ```python
 import pyvisa
 
-rm = pyvisa.ResourceManager()
-instr = rm.open_resource(resource='proxy://host:port/GPIB0::1::INSTR')
-print(instr.query('*IDN?'))
+rm = pyvisa.ResourceManager("YourProxyServerIp:YourProxyServerPort@proxy")
+instr = rm.open_resource(resource="GPIB0::1::INSTR")
+print(instr.query("*IDN?"))
 ```
 
 ## Contributing
