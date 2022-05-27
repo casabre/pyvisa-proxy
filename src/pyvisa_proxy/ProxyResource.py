@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.ProxyResource
-    ~~~~~~~~~~~~~~~~~~~~
+"""PyVISA-proxy resource which accesses VISA handles at server side.
 
-    PyVISA-proxy resource which accesses VISA handles at server side.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 import typing
 
@@ -25,6 +21,7 @@ class ProxyResource(Resource):
         rpc_port: int,
         **kwargs,
     ):
+        """Initialize proxy resource."""
         self._rpc_client: typing.Optional[RpcClient] = RpcClient(
             host, rpc_port
         )
@@ -36,10 +33,11 @@ class ProxyResource(Resource):
         )
 
     def __del__(self) -> None:
+        """Clean up on garbage collection."""
         return self.close()
 
     def close(self) -> None:
-        """Close remote session and zmq connection"""
+        """Close remote session and zmq connection."""
         if self._rpc_client is not None:
             self._rpc_client.request(None, "close_resource")
             self._rpc_client.close()

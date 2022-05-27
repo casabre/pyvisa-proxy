@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.version
-    ~~~~~~~~~~~~~~~~~~~~
+"""Retrieve version of package.
 
-    Retrieve version of package.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 import sys
 

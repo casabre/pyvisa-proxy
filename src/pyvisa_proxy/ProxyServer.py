@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.ProxyServer
-    ~~~~~~~~~~~~~~~~~~~~
+"""PyVISA-proxy server which provides access to VISA handles.
 
-    PyVISA-proxy server which provides access to VISA handles.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 import asyncio
 import json
@@ -55,19 +51,26 @@ with open(
 
 
 class ProcessorInterface(ABC):
+    """Interface class for processors."""
+
     @abstractmethod
     def close(self):
+        """Close connections."""
         pass
 
     @abstractmethod
     async def call(self):
+        """Specific call functions."""
         pass
 
 
 class SynchronizationProcessor(ProcessorInterface):
+    """Synchronization implementation class."""
+
     def __init__(
         self, sync_port: int, rpc_port: int, backend: str, version: str
     ):
+        """Initialize processor."""
         self.ctx = zmq.asyncio.Context.instance()
         self.socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
         self.socket.bind(f"tcp://*:{sync_port}")
@@ -77,6 +80,7 @@ class SynchronizationProcessor(ProcessorInterface):
         self.version = version
 
     def close(self):
+        """Close connections."""
         if self.socket:
             self.socket.close()
 
@@ -92,7 +96,10 @@ class SynchronizationProcessor(ProcessorInterface):
 
 
 class RpcProcessor(ProcessorInterface):
+    """Synchronization implementation class."""
+
     def __init__(self, backend: str):
+        """Initialize processor."""
         self.rm = pyvisa.ResourceManager(backend)
         self.visa: typing.Dict[str, list] = {}
         self.ctx = zmq.asyncio.Context.instance()
@@ -100,6 +107,7 @@ class RpcProcessor(ProcessorInterface):
         self.port = self.socket.bind_to_random_port("tcp://*")
 
     def close(self):
+        """Close connections."""
         for handle in list(self.visa.values()):
             handle[0].close()
         if self.socket:
@@ -128,10 +136,14 @@ class RpcProcessor(ProcessorInterface):
         except Exception as err:
             # Unfortunately, no simple and lightweight solution
             # https://stackoverflow.com/a/45241491
-            LOGGER.error(f"Job {job_data} from {identity} threw {err}")
+            LOGGER.error(
+                f"Job {job_data} from {identity.decode()} failedthrew {err}"
+            )
             result["exception"] = pickle.dumps(sys.exc_info())
         else:
-            LOGGER.debug(f"Job {job_data} from {identity} result: {res}")
+            LOGGER.debug(
+                f"Job {job_data} from {identity.decode()} result: {res}"
+            )
             result["value"] = res
         return result
 
@@ -271,24 +283,31 @@ class ProxyServer:
         """Initialize proxy server."""
         self._stop = Event()
         self._poller = zmq.Poller()
-        self._rpc_processor = RpcProcessor(backend)
-        self._sync_processor = SynchronizationProcessor(
+        self._rpc_processor: typing.Optional[RpcProcessor] = RpcProcessor(
+            backend
+        )
+        self._sync_processor: typing.Optional[
+            SynchronizationProcessor
+        ] = SynchronizationProcessor(
             port, self._rpc_processor.port, backend, VERSION
         )
         self._poller.register(self._rpc_processor.socket, zmq.POLLIN)
         self._poller.register(self._sync_processor.socket, zmq.POLLIN)
 
     def __enter__(self):
+        """Context manager initialization implementation."""
         return self
 
     def __exit__(self, exc_type, exc_value, trace):
+        """Context manager close implementation."""
         self.close()
 
     def __del__(self):
+        """Clean up."""
         self.close()
 
     def close(self):
-        """Close sync-process, zmq connection and VISA handles"""
+        """Close sync-process, zmq connection and VISA handles."""
         self._stop.set()
         if hasattr(self, "_rpc_processor") and self._rpc_processor is not None:
             self._rpc_processor.close()
@@ -301,13 +320,21 @@ class ProxyServer:
             self._sync_processor = None
 
     def run(self) -> None:
-        """Run server with asyncio runner"""
+        """Run server with asyncio runner."""
         LOGGER.info("Starting PyVISA Proxy Server.")
         LOGGER.info(f"PyVISA-proxy version: {VERSION}")
-        if self._sync_processor.backend != "":
-            LOGGER.info(f"PyVISA backend: {self._sync_processor.backend}")
-        LOGGER.info(f"Synchronization port: {self._sync_processor.port}")
-        LOGGER.info(f"RPC port: {self._rpc_processor.port}")
+        backend = typing.cast(
+            SynchronizationProcessor, self._sync_processor
+        ).backend
+        if backend != "":
+            LOGGER.info(f"PyVISA backend: {backend}")
+        sync_port = typing.cast(
+            SynchronizationProcessor, self._sync_processor
+        ).port
+        LOGGER.info(f"Synchronization port: " f"{sync_port}")
+        LOGGER.info(
+            f"RPC port: {typing.cast(RpcProcessor, self._rpc_processor).port}"
+        )
         asyncio.run(self._run())
 
     async def _run(self):
@@ -315,12 +342,25 @@ class ProxyServer:
         while not self._stop.is_set():
             socks = dict(self._poller.poll(100))
             if (
-                self._sync_processor.socket in socks
-                and socks[self._sync_processor.socket] == zmq.POLLIN
+                typing.cast(
+                    SynchronizationProcessor, self._sync_processor
+                ).socket
+                in socks
+                and socks[
+                    typing.cast(
+                        SynchronizationProcessor, self._sync_processor
+                    ).socket
+                ]
+                == zmq.POLLIN
             ):
-                await self._sync_processor.call()
+                await typing.cast(
+                    SynchronizationProcessor, self._sync_processor
+                ).call()
             if (
-                self._rpc_processor.socket in socks
-                and socks[self._rpc_processor.socket] == zmq.POLLIN
+                typing.cast(RpcProcessor, self._rpc_processor).socket in socks
+                and socks[
+                    typing.cast(RpcProcessor, self._rpc_processor).socket
+                ]
+                == zmq.POLLIN
             ):
-                await self._rpc_processor.call()
+                await typing.cast(RpcProcessor, self._rpc_processor).call()

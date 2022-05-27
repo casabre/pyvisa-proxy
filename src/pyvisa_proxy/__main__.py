@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.__main__
-    ~~~~~~~~~~~~~~~~~~~~
+"""Run PyVISA-proxy server as service.
 
-    Run PyVISA-proxy server as service.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 import argparse
 import logging

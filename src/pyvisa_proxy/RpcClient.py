@@ -1,12 +1,7 @@
-"""
-    pyvisa-proxy.RpcClient
-    ~~~~~~~~~~~~~~~~~~~~
+"""RPC-client which accesses corresponding attributes at server side.
 
-    PyVISA-proxy RPC-client which accesses corresponding attributes at server
-    side.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 import logging
 import platform
@@ -27,6 +22,7 @@ class RpcClient(object):
     """PyVISA remote proxy resource which takes care of outgoing VISA calls."""
 
     def __init__(self, host: str, rpc_port: int):
+        """Initialize RPC client."""
         self._rpc_port = rpc_port
         self._identity = f"{platform.node()}.{uuid.uuid4()}"
         self._ctx = zmq.Context.instance()
@@ -35,10 +31,11 @@ class RpcClient(object):
         self._socket.connect(f"tcp://{host}:{self._rpc_port}")
 
     def __del__(self) -> None:
+        """Clean up on garbage collection."""
         return self.close()
 
     def close(self) -> None:
-        """Close zmq connection"""
+        """Close zmq connection."""
         self._socket.close()
         return None
 

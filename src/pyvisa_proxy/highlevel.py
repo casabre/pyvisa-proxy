@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.highlevel
-    ~~~~~~~~~~~~~~~~~~~~
+"""Remote VISA Library.
 
-    Remote VISA Library.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 
 import logging
@@ -36,10 +32,13 @@ LOGGER = logging.getLogger(__name__)
 
 
 class CompatibilityError(Exception):
+    """Compatibility exception class."""
+
     pass
 
 
 def sync_up(host: str, sync_port: int, timeout: int):
+    """Synchronize with Proxy server."""
     ctx = zmq.Context.instance()
     socket = ctx.socket(zmq.REQ)  # pylint: disable=E1101
     socket.identity = f"{platform.node()}.{uuid.uuid4()}".encode()
@@ -62,6 +61,7 @@ def sync_up(host: str, sync_port: int, timeout: int):
 
 
 def check_for_version_compatibility(version):
+    """Check for a client and server version compabitility."""
     resource_version = parse(VERSION)
     server_version = parse(version)
     if resource_version.release < server_version.release:
@@ -90,6 +90,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
     """
 
     def __del__(self):
+        """Clean up on garbage collection."""
         rpc_client = getattr(self, "_rpc_client", None)
         if rpc_client is not None:
             rpc_client.close()
@@ -123,8 +124,9 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         self._rpc_client = RpcClient(self._rpc_host, self._rpc_port)
 
     def _register(self, obj):
-        """Creates a random but unique session handle for a session object,
-        register it in the sessions dictionary and return the value
+        """Create a random but unique session handle for a session object.
+
+        Register it in the sessions dictionary and return the value
 
         :param obj: a session object.
         :return: session handle
@@ -145,7 +147,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         access_mode=constants.AccessModes.no_lock,
         open_timeout=constants.VI_TMO_IMMEDIATE,
     ) -> typing.Tuple[VISASession, StatusCode]:
-        """Opens a session to the specified resource.
+        """Open a session to the specified resource.
 
         Corresponds to viOpen function of the VISA library.
 
@@ -153,13 +155,15 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
                         (should always be a session returned
                         from open_default_resource_manager()).
         :param resource_name: Unique symbolic name of a resource.
-        :param access_mode: Specifies the mode by which the resource is to be accessed. (constants.AccessModes)
-        :param open_timeout: Specifies the maximum time period (in milliseconds) that this operation waits
-                             before returning an error.
-        :return: Unique logical identifier reference to a session, return value of the library call.
+        :param access_mode: Specifies the mode by which the resource is to be
+                            accessed. (constants.AccessModes)
+        :param open_timeout: Specifies the maximum time period
+                            (in milliseconds) that this operation waits
+                            before returning an error.
+        :return: Unique logical identifier reference to a session, return value
+                            of the library call.
         :rtype: session, :class:`pyvisa.constants.StatusCode`
         """
-
         # Do not support it currently
         raise NotImplementedError(
             "Opening a bare resource is currently not suported."
@@ -214,7 +218,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         return res
 
     def close(self, session):
-        """Closes the specified session, event, or find list.
+        """Close the specified session, event, or find list.
 
         Corresponds to viClose function of the VISA library.
 
@@ -230,7 +234,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
             return constants.StatusCode.error_invalid_object
 
     def open_default_resource_manager(self):
-        """Returns a session to the Default Resource Manager resource.
+        """Return a session to the Default Resource Manager resource.
 
         Corresponds to viOpenDefaultRM function of the VISA library.
 
@@ -241,12 +245,11 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         return self._register(self), constants.StatusCode.success
 
     def list_resources(self, session, query="?*::INSTR"):
-        """Returns a tuple of all connected devices matching query.
+        """Return a tuple of all connected devices matching query.
 
         :param session:
         :param query: regular expression used to match devices.
         """
-
         return self._rpc_client.request(
             None,
             "list_resources",
@@ -254,7 +257,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         )
 
     def read(self, session, count):
-        """Reads data from device or interface synchronously.
+        """Read data from device or interface synchronously.
 
         Corresponds to viRead function of the VISA library.
 
@@ -263,7 +266,6 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         :return: data read, return value of the library call.
         :rtype: bytes, :class:`pyvisa.constants.StatusCode`
         """
-
         try:
             sess = self.sessions[session]
         except KeyError:
@@ -278,7 +280,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
             return b"", constants.StatusCode.error_nonsupported_operation
 
     def write(self, session, data):
-        """Writes data to device or interface synchronously.
+        """Write data to device or interface synchronously.
 
         Corresponds to viWrite function of the VISA library.
 
@@ -289,7 +291,6 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
             library call.
         :rtype: int, :class:`pyvisa.constants.StatusCode`
         """
-
         try:
             sess = self.sessions[session]
         except KeyError:
@@ -301,7 +302,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
             return 0, constants.StatusCode.error_nonsupported_operation
 
     def get_attribute(self, session, attribute):
-        """Retrieves the state of an attribute.
+        """Retrieve the state of an attribute.
 
         Corresponds to viGetAttribute function of the VISA library.
 
@@ -322,7 +323,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         return sess.get_attribute(attribute)
 
     def set_attribute(self, session, attribute, attribute_state):
-        """Sets the state of an attribute.
+        """Set the state of an attribute.
 
         Corresponds to viSetAttribute function of the VISA library.
 
@@ -334,16 +335,9 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         :return: return value of the library call.
         :rtype: :class:`pyvisa.constants.StatusCode`
         """
-
         try:
             sess = self.sessions[session]
         except KeyError:
             return constants.StatusCode.error_invalid_object
 
         return sess.set_attribute(attribute, attribute_state)
-
-    def disable_event(self, session, event_type, mechanism):
-        pass
-
-    def discard_events(self, session, event_type, mechanism):
-        pass

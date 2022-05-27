@@ -1,11 +1,7 @@
-"""
-    pyvisa-proxy.__init__
-    ~~~~~~~~~~~~~~~~~~~~
+"""PyVISA extension in order to deal with remote 'local' hardware.
 
-    PyVISA extension in order to deal with remote 'local' hardware.
-
-    :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
-    :license: MIT, see LICENSE for more details.
+:copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
+:license: MIT, see LICENSE for more details.
 """
 
 from .__main__ import main  # noqa
