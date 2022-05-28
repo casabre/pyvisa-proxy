@@ -37,6 +37,7 @@ Using pip::
 
 You can report a problem or ask for features in the `issue tracker`_.
 
+.. _PyVISA: http://pyvisa.readthedocs.org/
 .. _PyVISA-proxy: http://pyvisa-proxy.readthedocs.org/
 .. _PyPI: https://pypi.python.org/pypi/PyVISA-proxy
 .. _GitHub: https://github.com/casabre/pyvisa-proxy
