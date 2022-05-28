@@ -1,3 +1,4 @@
+import time
 from multiprocessing import Process
 
 import pytest
@@ -35,6 +36,12 @@ def test_integration_with_main(
         )
     finally:
         executor.terminate()
+        count = 0
+        while executor.is_alive():
+            time.sleep(0.001)
+            count += 1
+            if count == 100:
+                TimeoutError("Subprocess did not terminate in time.")
 
 
 def get_resource_and_test(
