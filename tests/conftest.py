@@ -1,3 +1,4 @@
+import typing
 from concurrent.futures import ThreadPoolExecutor
 
 import pytest
@@ -42,6 +43,19 @@ def executor() -> ThreadPoolExecutor:
     executor = ThreadPoolExecutor()
     yield executor
     executor.shutdown(wait=False)
+
+
+@pytest.fixture
+def run_infinite(executor) -> typing.Callable:
+    future = None
+
+    def run(target, *args):
+        nonlocal future, executor
+        future = executor.submit(target, *args)
+
+    yield run
+    if future.running():
+        future.cancel()
 
 
 @pytest.fixture

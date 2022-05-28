@@ -34,9 +34,9 @@ def create_message(
 
 
 @pytest.fixture
-def proxy_server(sync_port, executor) -> ProxyServer:
+def proxy_server(sync_port, run_infinite) -> ProxyServer:
     server = ProxyServer(sync_port, backend="@sim")
-    executor.submit(server.run)
+    run_infinite(server.run)
     yield server
     server.close()
 
