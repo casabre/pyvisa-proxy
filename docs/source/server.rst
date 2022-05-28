@@ -9,7 +9,7 @@ instruments.
 You can run the PyVISA-proxy server calling the package with the 
 synchronization port:
 
-.. code-block: shell
+.. code-block:: shell
     
     pyvisa_proxy --port 5000
 
