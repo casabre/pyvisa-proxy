@@ -1,6 +1,8 @@
 import typing
-from pyvisa_proxy.__main__ import parse_arguments
+
 import pytest
+
+from pyvisa_proxy.__main__ import parse_arguments
 
 
 @pytest.mark.parametrize(
