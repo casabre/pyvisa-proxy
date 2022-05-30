@@ -285,11 +285,11 @@ class ProxyServer:
         backend: str = "",
     ):
         """Initialize proxy server."""
+        self._stop = Event()
         if port == rpc_port:
             raise ValueError(
                 "Synchronization and RPC port should not be identical"
             )
-        self._stop = Event()
         self._poller = zmq.Poller()
         self._rpc_processor: typing.Optional[RpcProcessor] = RpcProcessor(
             backend, rpc_port
