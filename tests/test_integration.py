@@ -16,19 +16,27 @@ def test_integration_with_class(
     if parse(pyvisa.__version__) < parse("1.12.0"):
         pytest.skip("PyVISA-proxy implementation in PyVISA is missing.")
 
-    with ProxyServer(sync_port, "@sim") as server:
+    with ProxyServer(sync_port, None, "@sim") as server:
         executor.submit(server.run)
         get_resource_and_test(
             sync_port, resource_name, rm_sim, idn_string, query_string
         )
 
 
+@pytest.mark.parametrize("static_rpc_port", [True, False])
 def test_integration_with_main(
-    sync_port, resource_name, rm_sim, idn_string, query_string
+    static_rpc_port,
+    sync_port,
+    rpc_port,
+    resource_name,
+    rm_sim,
+    idn_string,
+    query_string,
 ):
     if parse(pyvisa.__version__) < parse("1.12.0"):
         pytest.skip("PyVISA-proxy implementation in PyVISA is missing.")
-    executor = Process(target=main, args=(sync_port, "@sim"))
+    test_rpc_port = rpc_port if static_rpc_port else None
+    executor = Process(target=main, args=(sync_port, test_rpc_port, "@sim"))
     try:
         executor.start()
         get_resource_and_test(

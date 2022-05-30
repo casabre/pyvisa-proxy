@@ -98,13 +98,17 @@ class SynchronizationProcessor(ProcessorInterface):
 class RpcProcessor(ProcessorInterface):
     """Synchronization implementation class."""
 
-    def __init__(self, backend: str):
+    def __init__(self, backend: str, port: typing.Optional[int] = None):
         """Initialize processor."""
         self.rm = pyvisa.ResourceManager(backend)
         self.visa: typing.Dict[str, list] = {}
         self.ctx = zmq.asyncio.Context.instance()
         self.socket = self.ctx.socket(zmq.ROUTER)  # pylint: disable=E1101
-        self.port = self.socket.bind_to_random_port("tcp://*")
+        if port is not None:
+            self.port = port
+            self.socket.bind(f"tcp://*:{port}")
+        else:
+            self.port = self.socket.bind_to_random_port("tcp://*")
 
     def close(self):
         """Close connections."""
@@ -272,19 +276,23 @@ class RpcProcessor(ProcessorInterface):
 
 
 class ProxyServer:
-    """
-    PyVISA remote proxy server which handles incoming VISA calls.
+    """PyVISA remote proxy server which handles incoming VISA calls."""
 
-    :param object: object base class
-    :type object: object
-    """
-
-    def __init__(self, port: int, backend: str = ""):
+    def __init__(
+        self,
+        port: int,
+        rpc_port: typing.Optional[int] = None,
+        backend: str = "",
+    ):
         """Initialize proxy server."""
+        if port == rpc_port:
+            raise ValueError(
+                "Synchronization and RPC port should not be identical"
+            )
         self._stop = Event()
         self._poller = zmq.Poller()
         self._rpc_processor: typing.Optional[RpcProcessor] = RpcProcessor(
-            backend
+            backend, rpc_port
         )
         self._sync_processor: typing.Optional[
             SynchronizationProcessor

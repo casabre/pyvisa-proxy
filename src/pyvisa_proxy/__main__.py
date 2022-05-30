@@ -5,6 +5,7 @@
 """
 import argparse
 import logging
+import typing
 from atexit import register
 from weakref import WeakMethod
 
@@ -13,9 +14,9 @@ from .ProxyServer import ProxyServer
 LOGGER = logging.getLogger(__name__)
 
 
-def main(port: int, backend: str = ""):
+def main(port: int, rpc_port: typing.Optional[int] = None, backend: str = ""):
     """Run a PyVISA proxy server."""
-    server = ProxyServer(port, backend)
+    server = ProxyServer(port, rpc_port, backend)
     close_ref = WeakMethod(server.close)
 
     def call_close():
@@ -39,6 +40,13 @@ if __name__ == "__main__":
         dest="port",
         default=5000,
         help="Port for zmq localhost binding",
+    )
+    parser.add_argument(
+        "--rpc-port",
+        type=int,
+        dest="port",
+        default=None,
+        help="Custom RPC Port for zmq localhost binding",
     )
     parser.add_argument(
         "--backend",
