@@ -5,6 +5,7 @@
 """
 import argparse
 import logging
+import sys
 import typing
 from atexit import register
 from weakref import WeakMethod
@@ -29,10 +30,8 @@ def main(port: int, rpc_port: typing.Optional[int] = None, backend: str = ""):
     LOGGER.info("Server is shutting down.")
 
 
-if __name__ == "__main__":
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s"
-    )
+def parse_arguments(argv):
+    """Parse CLI arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--port",
@@ -44,7 +43,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--rpc-port",
         type=int,
-        dest="port",
+        dest="rpc_port",
         default=None,
         help="Custom RPC Port for zmq localhost binding",
     )
@@ -55,5 +54,13 @@ if __name__ == "__main__":
         default="",
         help="Backend for pyvisa ResourceManager",
     )
-    args = parser.parse_args()
-    main(args.port, args.backend)
+    args = parser.parse_args(argv)
+    return args
+
+
+if __name__ == "__main__":
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s: %(message)s"
+    )
+    args = parse_arguments(sys.argv[1:])
+    main(args.port, args.rpc_port, args.backend)
