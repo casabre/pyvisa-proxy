@@ -30,6 +30,7 @@ def test_integration_with_class(
         get_resource_and_test(
             sync_port, resource_name, rm_sim, idn_string, query_string
         )
+        server.close()
 
 
 @pytest.mark.parametrize("static_rpc_port", [True, False])
