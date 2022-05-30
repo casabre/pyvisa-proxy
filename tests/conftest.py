@@ -54,6 +54,8 @@ def run_infinite(executor) -> typing.Callable:
         future = executor.submit(target, *args)
 
     yield run
+    if future is None:
+        pytest.fail("Thread is not shutting down.")
     if future.running():
         future.cancel()
 

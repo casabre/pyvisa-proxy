@@ -94,6 +94,11 @@ def test_sync_up(rpc_port, sync_port, executor):
     assert rep["version"] == __version__
 
 
+def test_ports_identical():
+    with pytest.raises(ValueError):
+        ProxyServer(5000, 5000)
+
+
 def test_open_resource(proxy_server, proxy_resource, resource_name):
     id = proxy_resource.identity.decode("utf-8")
     open_resource(proxy_resource, resource_name)
