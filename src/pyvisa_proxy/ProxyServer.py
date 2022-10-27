@@ -261,7 +261,7 @@ class RpcProcessor(ProcessorInterface):
         ]
         for key, value in kwargs.items():
             await loop.run_in_executor(
-                None, setattr, self.visa[identity], key, value
+                None, setattr, self.visa[identity][0], key, value
             )
 
     async def _delete_visa_handle(self, identity: str, *args, **kwargs):
