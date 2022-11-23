@@ -12,7 +12,7 @@ import dill as pickle
 import zmq
 from six import reraise
 
-from .version import get_version
+from ._version_handling import get_version
 
 VERSION = get_version()
 LOGGER = logging.getLogger(__name__)

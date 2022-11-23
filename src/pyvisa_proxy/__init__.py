@@ -4,12 +4,12 @@
 :license: MIT, see LICENSE for more details.
 """
 
-from .__main__ import main  # noqa
+from ._main import main as run_server
+from ._version_handling import get_version
 from .highlevel import ProxyVisaLibrary
 from .ProxyServer import ProxyServer
-from .version import get_version
 
 __version__ = get_version()
-__all__ = ["__version__", "ProxyServer"]
+__all__ = ["__version__", "run_server", "ProxyServer"]
 
 WRAPPER_CLASS = ProxyVisaLibrary

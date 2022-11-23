@@ -21,7 +21,7 @@ from jsonschema.validators import extend, validator_for
 from pyvisa import InvalidSession
 from tblib import pickling_support
 
-from .version import get_version
+from ._version_handling import get_version
 
 pickling_support.install()
 
