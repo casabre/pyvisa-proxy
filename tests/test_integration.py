@@ -6,7 +6,7 @@ import pyvisa
 from packaging.version import parse
 from pyvisa import ResourceManager
 
-from pyvisa_proxy import ProxyServer, main
+from pyvisa_proxy import ProxyServer, run_server
 from pyvisa_proxy.ProxyResource import ProxyResource
 
 
@@ -46,7 +46,9 @@ def test_integration_with_main(
     if parse(pyvisa.__version__) < parse("1.12.0"):
         pytest.skip("PyVISA-proxy implementation in PyVISA is missing.")
     test_rpc_port = rpc_port if static_rpc_port else None
-    executor = Process(target=main, args=(sync_port, test_rpc_port, "@sim"))
+    executor = Process(
+        target=run_server, args=(sync_port, test_rpc_port, "@sim")
+    )
     try:
         executor.start()
         get_resource_and_test(
