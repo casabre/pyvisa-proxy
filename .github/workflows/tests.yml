@@ -39,7 +39,7 @@ jobs:
       - name: Convert coverage
         run: |
           tox -e coverage
-      - uses: codecov/codecov-action@v2
+      - uses: codecov/codecov-action@v3
         with:
           flags: unittests
           name: codecov-umbrella
