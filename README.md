@@ -1,5 +1,7 @@
 # PyVISA-proxy
 
+[![Documentation](https://readthedocs.org/projects/pyvisa-proxy/badge/?version=latest)](https://pyvisa-proxy.readthedocs.io/) [![Build Status](https://github.com/casabre/pyvisa-proxy/actions/workflows/tests.yml/badge.svg)](https://github.com/casabre/pyvisa-proxy/actions/) [![PyPI Versions](https://img.shields.io/pypi/pyversions/pyvisa-proxy.svg)](https://pypi.python.org/pypi/pyvisa-proxy) ![PyPI - Downloads](https://img.shields.io/pypi/dm/pyvisa-proxy)  [![PyPI Status](https://img.shields.io/pypi/status/pyvisa-proxy.svg)](https://pypi.python.org/pypi/pyvisa-proxy) [![PyPI License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 This plugin should extend PyVISA's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB. In the end, you can decouple your VISA instrument hosting where you need bare metal nodes and the test script runner.
 
 ## Getting started
