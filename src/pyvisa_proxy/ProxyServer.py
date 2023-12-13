@@ -21,7 +21,7 @@ from jsonschema.validators import extend, validator_for
 from pyvisa import InvalidSession
 from tblib import pickling_support
 
-from .version import get_version
+from ._version_handling import get_version
 
 pickling_support.install()
 
@@ -261,7 +261,7 @@ class RpcProcessor(ProcessorInterface):
         ]
         for key, value in kwargs.items():
             await loop.run_in_executor(
-                None, setattr, self.visa[identity], key, value
+                None, setattr, self.visa[identity][0], key, value
             )
 
     async def _delete_visa_handle(self, identity: str, *args, **kwargs):
