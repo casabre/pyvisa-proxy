@@ -100,12 +100,12 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         """List a dummy library path to allow to create the library."""
         return (LibraryPath("unset"),)
 
-    def get_debug_info(self):
+    @staticmethod
+    def get_debug_info():
         """Return a list of lines with backend info."""
-        from . import __version__
-
         d = OrderedDict()
-        d["Version"] = "%s" % __version__
+        d["version"] = VERSION
+        d["zmq_version"] = zmq.__version__
 
         return d
 
