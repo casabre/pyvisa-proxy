@@ -210,9 +210,9 @@ class RpcProcessor(ProcessorInterface):
         if callable(attribute):
 
             def call():
+                args, kwargs = self._get_args_and_kwargs(job_data)
                 return attribute(*args, **kwargs)
 
-            args, kwargs = self._get_args_and_kwargs(job_data)
             res = await loop.run_in_executor(None, call)
         else:
             res = attribute
@@ -228,10 +228,16 @@ class RpcProcessor(ProcessorInterface):
         res = None
         return res
 
-    def _get_args_and_kwargs(self, job_data: dict):
+    def _get_args_and_kwargs(
+        self, job_data: dict
+    ) -> typing.Tuple[
+        typing.Tuple[typing.Any, ...], typing.Dict[str, typing.Any]
+    ]:
         """Extract arguments and keyword arguments."""
         args = tuple(job_data.get("args", ()))
-        kwargs = job_data.get("kwargs", {})
+        kwargs = typing.cast(
+            typing.Dict[str, typing.Any], job_data.get("kwargs", {})
+        )
         return args, kwargs
 
     async def _get_visa_handle(self, identity: str) -> pyvisa.Resource:
