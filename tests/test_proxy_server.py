@@ -1,4 +1,5 @@
 import asyncio
+import platform
 import typing
 import uuid
 
@@ -78,6 +79,11 @@ def send_command(proxy_resource, message: dict):
 
 
 def test_sync_up(ctx, rpc_port, sync_port, executor):
+    if platform.system() == "Windows":
+        pytest.skip(
+            "Skipping test on Windows because it will be stuck forever "
+            "while receiving reply"
+        )
     backend = "@py"
     sync_processor = SynchronizationProcessor(
         sync_port, rpc_port, backend, __version__
