@@ -39,7 +39,10 @@ jobs:
       - name: Convert coverage
         run: |
           tox -e coverage
-      - uses: codecov/codecov-action@v4
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        env:
+          CODECOV_TOKEN: ${{ secrets.CODECOV_TOKEN }}
         with:
           flags: unittests
           name: codecov-umbrella
