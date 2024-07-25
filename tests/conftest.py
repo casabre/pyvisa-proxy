@@ -11,7 +11,8 @@ from pyvisa_proxy import __version__
 from .utils import recv_compare_and_reply, sync_up_reply
 
 
-def get_free_port():
+def free_port():
+    """Find a free port by temporarily opening a socket."""
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind(("localhost", 0))
         port = s.getsockname()[1]
@@ -38,12 +39,12 @@ def idn_string(rm_sim, resource_name, query_string) -> str:
 
 @pytest.fixture
 def rpc_port() -> int:
-    return get_free_port()
+    return free_port()
 
 
 @pytest.fixture
 def sync_port(rpc_port) -> int:
-    return get_free_port()
+    return free_port()
 
 
 @pytest.fixture
