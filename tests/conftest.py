@@ -11,6 +11,13 @@ from pyvisa_proxy import __version__
 from .utils import recv_compare_and_reply, sync_up_reply
 
 
+def get_free_port():
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("localhost", 0))
+        port = s.getsockname()[1]
+    return port
+
+
 @pytest.fixture
 def resource_name(rm_sim) -> str:
     resources = rm_sim.list_resources()
@@ -31,22 +38,19 @@ def idn_string(rm_sim, resource_name, query_string) -> str:
 
 @pytest.fixture
 def rpc_port() -> int:
-    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-        s.bind(("localhost", 0))
-        port = s.getsockname()[1]
-    return port
+    return get_free_port()
 
 
 @pytest.fixture
 def sync_port(rpc_port) -> int:
-    return rpc_port + 1
+    return get_free_port()
 
 
 @pytest.fixture
 def executor() -> typing.Generator[ThreadPoolExecutor, None, None]:
     executor = ThreadPoolExecutor()
     yield executor
-    executor.shutdown(wait=False)
+    executor.shutdown(wait=False, cancel_futures=True)
 
 
 @pytest.fixture
@@ -78,7 +82,6 @@ def emulated_server(rpc_port):
         yield socket
     finally:
         socket.close()
-        ctx.term()
 
 
 @pytest.fixture
