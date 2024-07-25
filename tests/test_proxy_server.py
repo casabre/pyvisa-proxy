@@ -8,7 +8,7 @@ import zmq
 from six import reraise
 
 from pyvisa_proxy import ProxyServer, __version__
-from pyvisa_proxy.ProxyServer import SynchronizationProcessor
+from pyvisa_proxy.proxy_server import SynchronizationProcessor
 
 
 class Dummy(object):

@@ -21,8 +21,8 @@ from pyvisa.typing import VISASession
 from pyvisa.util import LibraryPath
 
 from ._version_handling import get_version
-from .ProxyResource import ProxyResource
-from .RpcClient import RpcClient
+from .proxy_resource import ProxyResource
+from .rpc_client import RpcClient
 
 # This import is required to register subclasses
 

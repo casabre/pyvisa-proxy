@@ -3,7 +3,7 @@ import typing
 import dill as pickle
 import pytest
 
-from pyvisa_proxy.ProxyResource import ProxyResource
+from pyvisa_proxy.proxy_resource import ProxyResource
 
 from .utils import Dummy
 

@@ -7,7 +7,7 @@
 from ._main import main as run_server
 from ._version_handling import get_version
 from .highlevel import ProxyVisaLibrary
-from .ProxyServer import ProxyServer
+from .proxy_server import ProxyServer
 
 __version__ = get_version()
 __all__ = ["__version__", "run_server", "ProxyServer"]
