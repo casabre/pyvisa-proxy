@@ -1,4 +1,5 @@
 import asyncio
+import platform
 import typing
 import uuid
 
@@ -8,7 +9,7 @@ import zmq
 from six import reraise
 
 from pyvisa_proxy import ProxyServer, __version__
-from pyvisa_proxy.ProxyServer import SynchronizationProcessor
+from pyvisa_proxy.proxy_server import SynchronizationProcessor
 
 
 class Dummy(object):
@@ -34,7 +35,9 @@ def create_message(
 
 
 @pytest.fixture
-def proxy_server(sync_port, run_infinite) -> ProxyServer:
+def proxy_server(
+    sync_port, run_infinite
+) -> typing.Generator[ProxyServer, None, None]:
     server = ProxyServer(sync_port, backend="@sim")
     run_infinite(server.run)
     yield server
@@ -42,10 +45,12 @@ def proxy_server(sync_port, run_infinite) -> ProxyServer:
 
 
 @pytest.fixture
-def proxy_resource(proxy_server, sync_port):
+def proxy_resource(
+    proxy_server, sync_port
+) -> typing.Generator[zmq.Socket, None, None]:
     ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REQ)
-    sync_socket = ctx.socket(zmq.REQ)
+    socket: zmq.Socket = ctx.socket(zmq.REQ)
+    sync_socket: zmq.Socket = ctx.socket(zmq.REQ)
     socket.identity = str(uuid.uuid4()).encode()
     sync_socket.identity = str(uuid.uuid4()).encode()
     try:
@@ -73,22 +78,28 @@ def send_command(proxy_resource, message: dict):
     return rep["value"]
 
 
-def test_sync_up(rpc_port, sync_port, executor):
+def test_sync_up(ctx, rpc_port, sync_port, executor):
+    if platform.system() == "Windows":
+        pytest.skip(
+            "Skipping test on Windows because it will be stuck forever "
+            "while receiving reply"
+        )
     backend = "@py"
+    sync_processor = SynchronizationProcessor(
+        sync_port, rpc_port, backend, __version__
+    )
 
     def run():
-        sync_processor = SynchronizationProcessor(
-            sync_port, rpc_port, backend, __version__
-        )
         asyncio.run(sync_processor.call())
 
     executor.submit(run)
-    ctx = zmq.Context.instance()
-    sync_socket = ctx.socket(zmq.REQ)
+    sync_socket: zmq.Socket = ctx.socket(zmq.REQ)
     sync_socket.identity = str(uuid.uuid4()).encode()
     sync_socket.connect(f"tcp://localhost:{sync_port}")
     sync_socket.send(b"")
     rep = pickle.loads(sync_socket.recv())
+    sync_socket.close()
+    sync_processor.close()
     assert rep["rpc_port"] == rpc_port
     assert rep["backend"] == backend
     assert rep["version"] == __version__
@@ -102,16 +113,16 @@ def test_ports_identical():
 def test_open_resource(proxy_server, proxy_resource, resource_name):
     id = proxy_resource.identity.decode("utf-8")
     open_resource(proxy_resource, resource_name)
-    assert id in proxy_server._rpc_processor.visa
+    assert id in proxy_server._rpc_processor.visa  # pylint: disable=W0212
 
 
 def test_close_resource(proxy_server, proxy_resource, resource_name):
     id = proxy_resource.identity.decode("utf-8")
     open_resource(proxy_resource, resource_name)
-    assert id in proxy_server._rpc_processor.visa
+    assert id in proxy_server._rpc_processor.visa  # pylint: disable=W0212
     message = create_message(None, "close_resource")
     send_command(proxy_resource, message)
-    assert id not in proxy_server._rpc_processor.visa
+    assert id not in proxy_server._rpc_processor.visa  # pylint: disable=W0212
 
 
 def test_list_resources(proxy_server, proxy_resource, rm_sim):
@@ -126,17 +137,27 @@ def test_list_resources(proxy_server, proxy_resource, rm_sim):
 def test_getattr(proxy_server, proxy_resource, resource_name):
     id = proxy_resource.identity.decode("utf-8")
     open_resource(proxy_resource, resource_name)
-    assert id in proxy_server._rpc_processor.visa
+    assert id in proxy_server._rpc_processor.visa  # pylint: disable=W0212
     message = create_message("timeout", "getattr")
     rep = send_command(proxy_resource, message)
-    assert rep == proxy_server._rpc_processor.visa[id][0].timeout
+    assert (
+        rep
+        == proxy_server._rpc_processor.visa[id][  # pylint: disable=W0212
+            0
+        ].timeout
+    )
 
 
 def test_setattr(proxy_server, proxy_resource, resource_name):
     id = proxy_resource.identity.decode("utf-8")
     open_resource(proxy_resource, resource_name)
-    assert id in proxy_server._rpc_processor.visa
+    assert id in proxy_server._rpc_processor.visa  # pylint: disable=W0212
     message = create_message("timeout", "setattr", value=1)
     rep = send_command(proxy_resource, message)
     assert rep is None
-    assert proxy_server._rpc_processor.visa[id][0].timeout == 1
+    assert (
+        proxy_server._rpc_processor.visa[id][  # pylint: disable=W0212
+            0
+        ].timeout
+        == 1
+    )

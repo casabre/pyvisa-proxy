@@ -3,11 +3,12 @@
 :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
 :license: MIT, see LICENSE for more details.
 """
+
 import typing
 
 from pyvisa import Resource
 
-from .RpcClient import RpcClient
+from .rpc_client import RpcClient
 
 
 class ProxyResource(Resource):

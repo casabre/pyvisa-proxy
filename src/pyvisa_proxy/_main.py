@@ -3,13 +3,14 @@
 :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
 :license: MIT, see LICENSE for more details.
 """
+
 import argparse
 import logging
 import typing
 from atexit import register
 from weakref import WeakMethod
 
-from .ProxyServer import ProxyServer
+from .proxy_server import ProxyServer
 
 LOGGER = logging.getLogger(__name__)
 

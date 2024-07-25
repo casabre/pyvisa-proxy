@@ -1,3 +1,4 @@
+import socket
 import typing
 from concurrent.futures import ThreadPoolExecutor
 
@@ -8,6 +9,14 @@ import zmq
 from pyvisa_proxy import __version__
 
 from .utils import recv_compare_and_reply, sync_up_reply
+
+
+def free_port():
+    """Find a free port by temporarily opening a socket."""
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("localhost", 0))
+        port = s.getsockname()[1]
+    return port
 
 
 @pytest.fixture
@@ -30,23 +39,23 @@ def idn_string(rm_sim, resource_name, query_string) -> str:
 
 @pytest.fixture
 def rpc_port() -> int:
-    return 5000
+    return free_port()
 
 
 @pytest.fixture
 def sync_port(rpc_port) -> int:
-    return rpc_port + 1
+    return free_port()
 
 
 @pytest.fixture
-def executor() -> ThreadPoolExecutor:
+def executor() -> typing.Generator[ThreadPoolExecutor, None, None]:
     executor = ThreadPoolExecutor()
     yield executor
     executor.shutdown(wait=False)
 
 
 @pytest.fixture
-def run_infinite(executor) -> typing.Callable:
+def run_infinite(executor) -> typing.Generator[typing.Callable, None, None]:
     future = None
 
     def run(target, *args):
@@ -65,10 +74,14 @@ def backend() -> str:
     return "@py"
 
 
+@pytest.fixture(scope="session")
+def ctx() -> zmq.Context:
+    return zmq.Context.instance()
+
+
 @pytest.fixture
-def emulated_server(rpc_port):
-    ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REP)
+def emulated_server(ctx, rpc_port):
+    socket: zmq.Socket = ctx.socket(zmq.REP)
     try:
         socket.bind(f"tcp://*:{rpc_port}")
         yield socket

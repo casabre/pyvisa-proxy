@@ -7,7 +7,7 @@ from packaging.version import parse
 from pyvisa import ResourceManager
 
 from pyvisa_proxy import ProxyServer, run_server
-from pyvisa_proxy.ProxyResource import ProxyResource
+from pyvisa_proxy.proxy_resource import ProxyResource
 
 
 @pytest.mark.parametrize("static_rpc_port", [True, False])

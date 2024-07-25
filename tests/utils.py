@@ -9,7 +9,7 @@ class Dummy(object):
 
 def sync_up_reply(sync_port: int, rpc_port: int, backend: str, version: str):
     ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.ROUTER)
+    socket: zmq.Socket = ctx.socket(zmq.ROUTER)
     try:
         socket.bind(f"tcp://*:{sync_port}")
         address, _, _ = socket.recv_multipart()

@@ -13,10 +13,10 @@ src_paths = ["src", "tests"]
 source = ["pyvisa_proxy"]
 
 [tool.coverage.paths]
-source = ["src", ".tox/*/site-packages"]
+source = ["src", "*/site-packages"]
 
 [tool.setuptools_scm]
 fallback_version = "0.0.0"
 
 [tool.pytest.ini_options]
-asyncio_mode="auto"
+asyncio_mode = "auto"
