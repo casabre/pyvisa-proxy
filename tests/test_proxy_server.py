@@ -42,10 +42,12 @@ def proxy_server(sync_port, run_infinite) -> ProxyServer:
 
 
 @pytest.fixture
-def proxy_resource(proxy_server, sync_port):
+def proxy_resource(
+    proxy_server, sync_port
+) -> typing.Generator[zmq.Socket, None, None]:
     ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REQ)
-    sync_socket = ctx.socket(zmq.REQ)
+    socket: zmq.Socket = ctx.socket(zmq.REQ)
+    sync_socket: zmq.Socket = ctx.socket(zmq.REQ)
     socket.identity = str(uuid.uuid4()).encode()
     sync_socket.identity = str(uuid.uuid4()).encode()
     try:
