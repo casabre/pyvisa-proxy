@@ -3,6 +3,7 @@
 :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
 :license: MIT, see LICENSE for more details.
 """
+
 import asyncio
 import json
 import logging
@@ -294,10 +295,10 @@ class ProxyServer:
         self._rpc_processor: typing.Optional[RpcProcessor] = RpcProcessor(
             backend, rpc_port
         )
-        self._sync_processor: typing.Optional[
-            SynchronizationProcessor
-        ] = SynchronizationProcessor(
-            port, self._rpc_processor.port, backend, VERSION
+        self._sync_processor: typing.Optional[SynchronizationProcessor] = (
+            SynchronizationProcessor(
+                port, self._rpc_processor.port, backend, VERSION
+            )
         )
         self._poller.register(self._rpc_processor.socket, zmq.POLLIN)
         self._poller.register(self._sync_processor.socket, zmq.POLLIN)

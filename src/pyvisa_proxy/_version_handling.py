@@ -3,8 +3,8 @@
 :copyright: 2022 by PyVISA-proxy Authors, see AUTHORS for more details.
 :license: MIT, see LICENSE for more details.
 """
-import sys
 
+import sys
 from importlib.metadata import PackageNotFoundError, version
 
 
