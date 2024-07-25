@@ -105,7 +105,7 @@ class ProxyVisaLibrary(highlevel.VisaLibraryBase):
         """Return a list of lines with backend info."""
         d = OrderedDict()
         d["version"] = VERSION
-        d["zmq_version"] = zmq.__version__
+        d["zmq_version"] = zmq.__version__  # pylint: disable = E1101
 
         return d
 
