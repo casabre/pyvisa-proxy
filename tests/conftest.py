@@ -1,3 +1,4 @@
+import socket
 import typing
 from concurrent.futures import ThreadPoolExecutor
 
@@ -30,7 +31,10 @@ def idn_string(rm_sim, resource_name, query_string) -> str:
 
 @pytest.fixture
 def rpc_port() -> int:
-    return 5000
+    with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+        s.bind(("localhost", 0))
+        port = s.getsockname()[1]
+    return port
 
 
 @pytest.fixture
@@ -39,14 +43,14 @@ def sync_port(rpc_port) -> int:
 
 
 @pytest.fixture
-def executor() -> ThreadPoolExecutor:
+def executor() -> typing.Generator[ThreadPoolExecutor, None, None]:
     executor = ThreadPoolExecutor()
     yield executor
     executor.shutdown(wait=False)
 
 
 @pytest.fixture
-def run_infinite(executor) -> typing.Callable:
+def run_infinite(executor) -> typing.Generator[typing.Callable, None, None]:
     future = None
 
     def run(target, *args):
@@ -68,12 +72,13 @@ def backend() -> str:
 @pytest.fixture
 def emulated_server(rpc_port):
     ctx = zmq.Context.instance()
-    socket = ctx.socket(zmq.REP)
+    socket: zmq.Socket = ctx.socket(zmq.REP)
     try:
         socket.bind(f"tcp://*:{rpc_port}")
         yield socket
     finally:
         socket.close()
+        ctx.term()
 
 
 @pytest.fixture
