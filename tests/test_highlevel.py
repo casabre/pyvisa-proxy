@@ -12,9 +12,8 @@ from pyvisa_proxy.highlevel import (
 )
 
 
-def test_sync_up(rpc_port, sync_port, executor):
+def test_sync_up(ctx, rpc_port, sync_port, executor):
     ref_backend = "@py"
-    ctx = zmq.Context.instance()
     sync_socket = ctx.socket(zmq.REP)
     try:
         sync_socket.bind(f"tcp://*:{sync_port}")

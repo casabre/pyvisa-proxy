@@ -74,9 +74,13 @@ def backend() -> str:
     return "@py"
 
 
+@pytest.fixture(scope="session")
+def ctx() -> zmq.Context:
+    return zmq.Context.instance()
+
+
 @pytest.fixture
-def emulated_server(rpc_port):
-    ctx = zmq.Context.instance()
+def emulated_server(ctx, rpc_port):
     socket: zmq.Socket = ctx.socket(zmq.REP)
     try:
         socket.bind(f"tcp://*:{rpc_port}")

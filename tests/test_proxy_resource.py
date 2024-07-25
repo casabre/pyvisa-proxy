@@ -21,7 +21,7 @@ def client(emulated_server, rpc_port, executor):
     emulated_server.send(pickle.dumps({"value": 0}))
     client = future.result()
     yield client
-    if client._rpc_client is not None:
+    if client._rpc_client is not None:  # pylint: disable=W0212
         future = executor.submit(client.__del__)
         emulated_server.recv()
         emulated_server.send(pickle.dumps({"value": 0}))
@@ -55,9 +55,8 @@ def test_close(client, emulated_server, executor):
     def server_close():
         emulated_server.recv()
         emulated_server.send(pickle.dumps({"value": 0}))
-        return None
 
     future = executor.submit(server_close)
     client.close()
     future.result()
-    assert client._rpc_client is None
+    assert client._rpc_client is None  # pylint: disable=W0212

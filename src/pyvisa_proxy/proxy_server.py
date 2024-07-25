@@ -85,15 +85,17 @@ class SynchronizationProcessor(ProcessorInterface):
         if self.socket:
             self.socket.close()
 
-    async def call(self):
+    async def call(self) -> None:
         """Process synchronization call."""
         address, _, _ = await self.socket.recv_multipart()
+        LOGGER.debug("Received sync request from %s", address)
         reply = {
             "rpc_port": self.rpc_port,
             "backend": self.backend,
             "version": self.version,
         }
         await self.socket.send_multipart([address, b"", pickle.dumps(reply)])
+        LOGGER.debug("Replied sync request to %s", address)
 
 
 class RpcProcessor(ProcessorInterface):
@@ -122,7 +124,7 @@ class RpcProcessor(ProcessorInterface):
         """Process RPC call."""
         identity, _, request = await self.socket.recv_multipart()
         job_data = pickle.loads(request)
-        LOGGER.debug(f"Job {job_data} from {identity}")
+        LOGGER.debug("Job %s from %s", job_data, identity)
         reply = await self._call_pyvisa(identity, job_data)
         await self.socket.send_multipart([identity, b"", pickle.dumps(reply)])
 
@@ -141,13 +143,16 @@ class RpcProcessor(ProcessorInterface):
         except Exception as err:
             # Unfortunately, no simple and lightweight solution
             # https://stackoverflow.com/a/45241491
-            LOGGER.error(
-                f"Job {job_data} from {identity.decode()} failedthrew {err}"
+            LOGGER.exception(
+                "Job %s from %s failed and threw %s",
+                job_data,
+                identity.decode(),
+                err,
             )
             result["exception"] = pickle.dumps(sys.exc_info())
         else:
             LOGGER.debug(
-                f"Job {job_data} from {identity.decode()} result: {res}"
+                "Job %s from %s result: %s", job_data, identity.decode(), res
             )
             result["value"] = res
         return result
