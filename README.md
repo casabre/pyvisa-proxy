@@ -2,7 +2,7 @@
 
 [![Documentation](https://readthedocs.org/projects/pyvisa-proxy/badge/?version=latest)](https://pyvisa-proxy.readthedocs.io/) [![Build Status](https://github.com/casabre/pyvisa-proxy/actions/workflows/tests.yml/badge.svg)](https://github.com/casabre/pyvisa-proxy/actions/) [![PyPI Versions](https://img.shields.io/pypi/pyversions/pyvisa-proxy.svg)](https://pypi.python.org/pypi/pyvisa-proxy) ![PyPI - Downloads](https://img.shields.io/pypi/dm/pyvisa-proxy)  [![PyPI Status](https://img.shields.io/pypi/status/pyvisa-proxy.svg)](https://pypi.python.org/pypi/pyvisa-proxy) [![PyPI License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-This plugin should extend PyVISA's funtionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB. In the end, you can decouple your VISA instrument hosting where you need bare metal nodes and the test script runner.
+This plugin should extend PyVISA's functionality mainly in order to address local hardware which is attached to a remote node, e.g. USB or GPIB. In the end, you can decouple your VISA instrument hosting where you need bare metal nodes and the test script runner.
 
 ## Getting started
 
@@ -19,7 +19,7 @@ pip install pyvisa-proxy
 In order to make devices remotely available, just run the PyVISA-remote server on your node. The server will open new VISA resources per request. Just run
 
 ```shell
-python -m pyivsa_proxy --port 5000
+python -m pyvisa_proxy --port 5000
 ```
 
 in order to host your "local" connections. Use any available port for network sharing.
@@ -32,7 +32,7 @@ Use a client like a normal PyVISA class. The calls will be forwarded by reflecti
 import pyvisa
 
 rm = pyvisa.ResourceManager("YourProxyServerIp:YourProxyServerPort@proxy")
-instr = rm.open_resource(resource="GPIB0::1::INSTR")
+instr = rm.open_resource("GPIB0::1::INSTR")
 print(instr.query("*IDN?"))
 ```
 
